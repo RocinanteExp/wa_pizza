@@ -168,7 +168,9 @@ main > *:nth-child(2) {
 .btn {
     font-size: 1.1rem;
     padding: 0.5rem 0.75rem;
+    /*
     border-radius: 0.5rem;
+    */
     box-shadow: 0 2px 2px 0;
     outline: none;
 }
@@ -214,6 +216,7 @@ main > *:nth-child(2) {
 .margin-bottom {
     margin-bottom: 1.5rem;
 }
+
 .pizza-size-container {
     border-bottom: 0.125rem solid black;
     padding-bottom: 0.75rem;
@@ -328,7 +331,7 @@ div.reflection {
 }
 
 /* checked mark aspect */
-[type="checkbox"]:checked + label:after {
+input[type="checkbox"]:checked + label:after {
     content: "\2713\0020";
     position: absolute;
     top: 0;

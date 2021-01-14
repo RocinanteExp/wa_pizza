@@ -27,6 +27,7 @@ const createQuantitySelect = (maxQuantity, defaultQuantity, callback) => {
 
 const createOrderBullet = (pizzaOrder, callback) => {
     const key = `key-li-${keyCounter++}`;
+
     const { size, ingredients = [], requests, quantity: defSelection } = pizzaOrder;
 
     return (
@@ -34,14 +35,14 @@ const createOrderBullet = (pizzaOrder, callback) => {
             {createQuantitySelect(constants.PIZZA_MAX_QUANTITIES[size], defSelection, callback)}
             <div className="container-flex flex-column">
                 <span>{`Pizza ${size}`}</span>
-                <span>{`Ingredienti: ${ingredients.join(", ")}`}</span>
+                <span>{`Ingredienti: ${ingredients.map(i => i.name).join(", ")}`}</span>
                 <span>{`Richieste: ${requests ? requests : "none"}`}</span>
             </div>
         </li>
     );
 };
 
-const OrdersList = ({ orders, handleOrderRemove}) => {
+const OrdersList = ({ orders, handleOrderRemove }) => {
     return (
         <div>
             <ul>
@@ -56,25 +57,6 @@ const OrdersList = ({ orders, handleOrderRemove}) => {
 };
 
 const OrderPreview = ({ orders, handleOrderRemove }) => {
-    //const [orderList, setOrderList] = useState([]);
-    console.log("sono preview", orders);
-
-    //useEffect(() => {
-    //    console.log("Use effect", debugCounter++, "orders", orders);
-    //    if (check.isObjEmpty(orders)) return;
-
-    //    // add the new order to the list
-    //    const newOrderList = orderList.slice();
-    //    newOrderList.push(orders);
-    //    setOrderList(newOrderList);
-    //}, [orders]);
-
-    //const removeOrderFromList = (indexOrder) => {
-    //    console.log(indexOrder);
-    //    const newOrderList = utility.removeItemFromArray(orderList, indexOrder);
-    //    console.log(newOrderList);
-    //    setOrderList(newOrderList);
-    //};
 
     const style = {
         margin: "0.35rem 0.9rem",

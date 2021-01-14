@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import "../styles/App.css";
 
-const Counter = ({ callback }) => {
+const Counter = ({ min, max, callback }) => {
     const [counter, setCounter] = useState(1);
 
     useEffect(() => {
+        // update the OrderForm state pizzaQuantity
         callback(counter);
     });
 
     const handleClick = (operation) => {
         if (operation === "sub") {
-            if (counter > 1) setCounter(counter - 1);
+            if (counter > min) setCounter(counter - 1);
         } else if (operation === "add") {
-            setCounter(counter + 1);
+            if (counter < max) setCounter(counter + 1);
         } else {
             console.error("operation not implemented in Counter", operation);
         }

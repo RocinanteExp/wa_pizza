@@ -1,5 +1,5 @@
 import "../styles/App.css";
-import { useState } from "react";
+import { useState, useEffect, StrictMode } from "react";
 import { OrderForm } from "./OrderForm";
 import { OrderPreview } from "./OrderPreview";
 import constants from "../utils/constants";
@@ -29,20 +29,25 @@ const Header = () => {
 };
 
 const templateForm = {
-    sizes: constants.PIZZA_DEF_SIZES,
-    ingredients: constants.PIZZA_DEF_INGREDIENTS,
+    sizes: Object.values(constants.PIZZA_SIZES),
+    ingredients: Object.values(constants.PIZZA_INGREDIENTS),
     requests: undefined,
     quantity: 1,
 };
 
+/**
+ * All the current orders shown on the OrderPreview are stored in the state "orders".
+ * Each time an order is been submitted from the OrderForm, the state "orders" is updated
+ **/
 const MainContent = () => {
     const [orders, setOrders] = useState([]);
 
     const handleOrderSubmit = (order) => {
-        const newOrders = orders.slice();
-        newOrders.push(order);
-        console.log(newOrders);
-        setOrders(newOrders);
+        console.group("Submitting order (MainContent)");
+        console.log(order);
+        console.groupEnd();
+
+        setOrders([...orders, order]);
     };
 
     const handleOrderRemove = (indexOrder) => {
@@ -50,20 +55,28 @@ const MainContent = () => {
         setOrders(newOrders);
     };
 
+    useEffect(() => {
+        console.group("Current orders (MainContent)");
+        console.log(orders);
+        console.groupEnd();
+    });
+
     return (
         <main className="container-flex flex-main-center main-content">
             <OrderForm templateForm={templateForm} handleOrderSubmit={handleOrderSubmit} />
-            <OrderPreview orders={orders} handleOrderRemove={handleOrderRemove}/>
+            <OrderPreview orders={orders} handleOrderRemove={handleOrderRemove} />
         </main>
     );
 };
 
 const App = () => {
     return (
-        <div className="container">
-            <Header />
-            <MainContent />
-        </div>
+        <StrictMode>
+            <div className="container">
+                <Header />
+                <MainContent />
+            </div>
+        </StrictMode>
     );
 };
 
