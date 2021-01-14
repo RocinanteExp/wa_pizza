@@ -1,0 +1,24 @@
+.dialog {
+    position: "sticky";
+    top: 0;
+    left: 0;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    text-align: center;
+}
+
+.dialog-info {
+    background-color: rgb(12, 92, 155);
+}
+
+.dialog-warning {
+    background-color: rgb(173, 105, 4);
+}
+
+.dialog-error {
+    background-color: rgb(144, 20, 11);
+}
+
+.dialog-message {
+    font-weight: 500;
+}

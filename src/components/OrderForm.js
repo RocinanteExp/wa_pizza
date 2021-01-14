@@ -117,6 +117,7 @@ const OrderForm = ({ templateForm, handleOrderSubmit }) => {
         console.log("pizza ingredients");
         console.table(pizzaIngredients);
         console.log("pizza quantity:", pizzaQuantity);
+        console.log("pizza size:", pizzaSize);
         console.groupEnd();
     });
 

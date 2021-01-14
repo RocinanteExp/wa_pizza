@@ -7,9 +7,22 @@ function removeItemFromArray(array, index) {
     return ret;
 }
 
-function addItemToArray(array, index) {
-    const ret = array.slice();
-    ret.push(index);
+/**
+ * @returns {Array} an array of a single element or an empty array
+ */
+function removeObjFromArrayInPlace(array, property, targetValue) {
+    for (const [index, elem] of array.entries()) {
+        if (elem[property] === targetValue) {
+            array.splice(index, 1);
+            return [elem];
+        }
+    }
+
+    return [];
+}
+
+function addItemToArray(array, elem) {
+    const ret = [...array, elem];
     return ret;
 }
 
@@ -32,7 +45,7 @@ function capitalize(str) {
  *
  *@param {Array} of Objects
  *@param {Any}
- *@param {String} 
+ *@param {String}
  *@returns {Boolean}
  **/
 function containsObj(array, searchValue, property) {
@@ -45,7 +58,7 @@ function containsObj(array, searchValue, property) {
  *
  *@param {Array} of Objects
  *@param {Any}
- *@param {String} 
+ *@param {String}
  *@returns {Object}
  **/
 function findObj(array, searchValue, property) {
@@ -53,6 +66,14 @@ function findObj(array, searchValue, property) {
     return ret;
 }
 
-const exportsObj = { removeItemFromArray, addItemToArray, validateOrder, capitalize, containsObj, findObj };
+const exportsObj = {
+    removeItemFromArray,
+    addItemToArray,
+    validateOrder,
+    capitalize,
+    containsObj,
+    findObj,
+    removeObjFromArrayInPlace,
+};
 
 export default exportsObj;

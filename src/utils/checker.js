@@ -2,5 +2,5 @@ function isObjEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
 
-const exportsObj = {isObjEmpty}
+const exportsObj = { isObjEmpty };
 export default exportsObj;

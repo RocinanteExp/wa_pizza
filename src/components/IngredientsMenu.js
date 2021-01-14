@@ -2,24 +2,9 @@ import utils from "../utils/utils";
 import { useState, useEffect } from "react";
 import sys from "../utils/constants";
 import checker from "../utils/checker";
-
-const Message = ({ text, type }) => {
-    const style = {
-        position: "sticky",
-        marginLeft: "1rem",
-        top: "1rem",
-        left: "1rem",
-        backgroundColor: "white",
-        zIndex: "2",
-    };
-    if (!type) return null;
-
-    return (
-        <div style={style} className={`message-${type} text-center`}>
-            {text}
-        </div>
-    );
-};
+import Dialog from "./Dialog";
+import Container from "./Container";
+import print from "../utils/printer";
 
 /**
  * create ingredient menu
@@ -29,16 +14,16 @@ const Message = ({ text, type }) => {
  * @returns {Component} IngredientsMenu
  **/
 const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
-    const currComponentId = "id-pizza-ingredients-menu";
+    const currComponentId = "id-container-pizza-ingredients-menu";
     const currComponentTitle = "Aggiungi Ingredienti!";
 
     const showIcons = size === sys.PIZZA_SIZES.LARGE ? true : false;
-    const limits = sys.PIZZA_MAX_INGREDIENTS[sys.PIZZA_SIZES.LARGE];
+    const limits = sys.PIZZA_MAX_INGREDIENTS[size];
 
     // states
+    const [numSelected, setNumSelected] = useState({ left: 0, right: 0, both: 0 });
     const [selectedItems, setSelectedItems] = useState([]);
     const [errorItems, setErrorItems] = useState([]);
-    const [numSelected, setNumSelected] = useState({ left: 0, right: 0, both: 0 });
     const [currSize, setCurrSize] = useState(size);
     const [message, setMessage] = useState({});
 
@@ -46,12 +31,12 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
 
     const style = {
         overflowY: "auto",
-        height: "400px",
+        height: "min(800px, 50vh)",
         scrollbarWidth: "thin",
         marginBottom: "1.5rem",
     };
 
-    const isPossibleChoice = (oldSide, newSide) => {
+    const isAPossibleChoice = (oldSide, newSide) => {
         switch (currSize) {
             case sys.PIZZA_SIZES.SMALL:
             case sys.PIZZA_SIZES.MEDIUM: {
@@ -68,7 +53,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
                     } else if (newSide === "right") {
                         return numSelected.right + 1 <= limits.right;
                     } else {
-                        console.log("ERROR: in isPossibleChoice", oldSide, newSide);
+                        console.log("ERROR: in isAPossibleChoice", oldSide, newSide);
                     }
                 } else if (!oldSide && newSide) {
                     if (newSide === "both") {
@@ -78,14 +63,14 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
                     } else if (newSide === "right") {
                         return numSelected.right + 1 <= limits.right;
                     } else {
-                        console.log("ERROR: in isPossibleChoice", oldSide, newSide);
+                        console.log("ERROR: in isAPossibleChoice", oldSide, newSide);
                     }
                 }
                 return numSelected.left + numSelected.right < limits.left + limits.right;
             }
             default: {
-                console.group("default case in isPossibleChoice");
-                console.log("currSize", currSize);
+                console.group("default case in isAPossibleChoice");
+                console.error("currSize", currSize);
                 console.groupEnd();
             }
         }
@@ -95,11 +80,23 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
 
     const handleIngredientTick = (event) => {
         const isChecked = event.target.checked;
+        const ingredientName = event.target.value;
+
+        // give an warning if the pizza has not be choosen
+        if (!size) {
+            setMessage({
+                type: "warning",
+                message: `Scegli prima la dimensione della pizza`,
+            });
+            return;
+        }
 
         // checking if a user need still to choose the side of the pizza
         if (isChecked) {
             for (const ingredient of selectedItems) {
                 if (!ingredient.side) {
+                    // check if the items is already in errorItems
+                    // this can happen when you tick other ingredients
                     if (!utils.containsObj(errorItems, ingredient.name, "name"))
                         setErrorItems(utils.addItemToArray(errorItems, { name: ingredient.name }));
 
@@ -108,87 +105,107 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
             }
         }
 
+        // find the sides which must be updated in numSelected each time an ingredient has been tick/tick off
+        // for small/medium pizza this side is always equal to both
+        // for large pizza this could be: left, right or left+right (the latter is true is the side of the ingredient is both)
+        const findSidesThatNeedUpdate = (ingredient) => {
+            if (currSize === sys.PIZZA_SIZES.LARGE && ingredient.side === sys.PIZZA_SIDES.BOTH) {
+                return [sys.PIZZA_SIDES.LEFT, sys.PIZZA_SIDES.RIGHT];
+            }
+ 
+            return [ingredient.side];
+        };
+
+        const updateNumSelected = (fromState, ingredient) => {
+            switch (fromState) {
+                case "delete": {
+                    // find which sides of numSelected need to be updated
+                    const sidesToBeUpdated = findSidesThatNeedUpdate(ingredient);
+
+                    // for each side create an object with obj.side = numSelected[side] - 1
+                    const updatedNumSelected = sidesToBeUpdated.map((side) => ({ [side]: numSelected[side] - 1 }));
+
+                    // update the state of numSelected
+                    setNumSelected(() => Object.assign({}, numSelected, ...updatedNumSelected));
+                    break;
+                }
+                default:
+                    print.err("not implemented in updatedNumSelected");
+            }
+        };
+
+        // update the numSelected immediately if the pizza is either small or medium because
+        // it is going to update always numSelected.both
         function shouldUpdateNumSelected() {
             if (currSize === sys.PIZZA_SIZES.SMALL || currSize === sys.PIZZA_SIZES.MEDIUM) return true;
             else if (currSize === sys.PIZZA_SIZES.LARGE) return false;
             else return null;
         }
 
-        const ingredientName = event.target.value;
         if (isChecked) {
             // check if the user can still choose more ingredients
-            // const isPossible = isPossibleChoice(limits, numSelected);
-            const isPossible = isPossibleChoice();
+            const isPossible = isAPossibleChoice();
             if (!isPossible) {
                 setMessage({
-                    type: "info",
-                    text: `Il numero massimo di ingredienti per ${size} è stata raggiunta ${limits["both"]}`,
+                    type: "warning",
+                    message: `Puoi selezionare fino a ${Object.values(limits)} ingredienti per la pizza ${size}`,
                 });
                 return;
             }
 
-            // add ingredient to selectedItems
             if (shouldUpdateNumSelected()) {
-                // if the pizza's size is small or medium, update also the side count
+                // case when pizza is small or medium
+                // update numSelected
                 setNumSelected(() => ({ ...numSelected, both: numSelected.both + 1 }));
+
+                // update selectedItems
                 const newSelectedItems = utils.addItemToArray(selectedItems, { name: ingredientName, side: "both" });
                 setSelectedItems(newSelectedItems);
+
+                // callback from parent container
                 handleOnChange(newSelectedItems);
             } else {
-                // pizza side LARGE
+                // pizza large
+
+                // the ingredient just added to the selectedItems is missing the "side" property.
+                // The side is taken care of in "handleChangeIcon" because the user has the faculty to select which side to put
+                // the ingredient on
                 const newSelectedItems = utils.addItemToArray(selectedItems, { name: ingredientName });
                 setSelectedItems(newSelectedItems);
             }
         } else if (!isChecked) {
-            // remove item from selectedItems
-            const indexSelectedItems = selectedItems.map((e) => e.name).indexOf(ingredientName);
-            if (indexSelectedItems >= 0) {
-                const ingredientToBeRemoved = selectedItems[indexSelectedItems];
-                console.group("!isChecked");
-                console.log("removing ingredient", ingredientToBeRemoved);
-                console.groupEnd();
+            const copySelectedItems = [...selectedItems];
 
-                const newSelectedItems = utils.removeItemFromArray(selectedItems, indexSelectedItems);
-                setSelectedItems(newSelectedItems);
-                handleOnChange(newSelectedItems);
+            // remove item from selectedItems
+            const deletedIngredients = utils.removeObjFromArrayInPlace(copySelectedItems, "name", ingredientName);
+
+            if (deletedIngredients.length > 0) {
+                const deletedIngredient = deletedIngredients[0];
+                print.grp("!isChecked");
+                print.out("removing ingredient", deletedIngredient);
+                print.grpend();
+
+                setSelectedItems(copySelectedItems);
+
+                // update parent state
+                handleOnChange(copySelectedItems);
 
                 // update numSelected
                 // the ingredient may not have a side yet if the pizza size is LARGE and the ingredient is the last chosen
-                if (ingredientToBeRemoved.side) {
-                    if (size === sys.PIZZA_SIZES.LARGE) {
-                        console.group(`update pizza ${size} numSelected`);
-                        console.log(
-                            `${ingredientToBeRemoved.side} => curr value ${numSelected[ingredientToBeRemoved.side]}`
-                        );
-                        console.groupEnd();
-                        if (ingredientToBeRemoved.side === "both") {
-                            setNumSelected(() => ({
-                                ...numSelected,
-                                right: numSelected["left"] - 1,
-                                left: numSelected["right"] - 1,
-                            }));
-                        } else {
-                            setNumSelected(() => ({
-                                ...numSelected,
-                                [ingredientToBeRemoved.side]: numSelected[ingredientToBeRemoved.side] - 1,
-                            }));
-                        }
-                    } else {
-                        setNumSelected(() => ({
-                            ...numSelected,
-                            [ingredientToBeRemoved.side]: numSelected[ingredientToBeRemoved.side] - 1,
-                        }));
-                    }
+                if (deletedIngredient.side) {
+                    updateNumSelected("delete", deletedIngredient);
                 }
             }
 
             // remote item from errorItems
-            // the ingredient may be in the errorItems if the pizza size is LARGE and the ingredient is the last chosen
-            const indexErrorItems = errorItems.map((e) => e.name).indexOf(ingredientName);
+            // the ingredient may be in the errorItems
+            // we could be in situation where the user tick and untick before he/she has choose the side of pizza in
+            // case of a large pizza size
+            const copyErrorItems = [...errorItems];
+            const deletedErrorItems = utils.removeObjFromArrayInPlace(copyErrorItems, "name", ingredientName);
 
-            if (indexErrorItems >= 0) {
-                const newErrorItems = utils.removeItemFromArray(errorItems, indexErrorItems);
-                setErrorItems(newErrorItems);
+            if (deletedErrorItems.length > 0) {
+                setErrorItems(copyErrorItems);
             }
         }
     };
@@ -206,14 +223,14 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
 
         const targetIngredient = { ...selectedItems[indexSelectedItems] };
 
-        console.group("sono handleChangeIcon");
-        console.log("name:", ingredientName, "side:", sidePizza);
-        console.log("ingredientObj:", targetIngredient);
-        console.groupEnd();
+        print.grp("sono handleChangeIcon");
+        print.out("name:", ingredientName, "side:", sidePizza);
+        print.out("ingredientObj:", targetIngredient);
+        print.grpend();
 
         console.group("isPossible choice");
         // check if the chosen pizza's side selection is available
-        if (!isPossibleChoice(targetIngredient.side, sidePizza)) {
+        if (!isAPossibleChoice(targetIngredient.side, sidePizza)) {
             console.log("oldside:", targetIngredient.side, "newside:", sidePizza);
             console.log(false);
             console.groupEnd();
@@ -221,7 +238,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
             // set info message
             setMessage({
                 type: "info",
-                text: `Il numero massimo di ingredienti per ${sidePizza} è stata raggiunta ${limits[sidePizza]}`,
+                message: `Il numero massimo di ingredienti per ${sidePizza} è stata raggiunta ${limits[sidePizza]}`,
             });
             return;
         } else {
@@ -273,6 +290,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
     };
 
     useEffect(() => {
+        // when size has been changed
         // restore the menu to default state when the pizza size has changed
         if (currSize !== size) {
             setCurrSize(size);
@@ -282,39 +300,40 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
             handleOnChange([]);
         }
         const printStates = () => {
-            console.group("useEffect of PizzaIngredientsMenu");
-            console.log("numSelected", size);
+            console.group("States of PizzaIngredientsMenu");
+            console.log("size", size);
             console.log("numSelected", numSelected);
             console.log("limits", limits);
-            console.log("selectedItems", selectedItems);
-            console.log("errorItems", errorItems);
+            console.log("selectedItems");
+            console.table(selectedItems);
+            console.log("errorItems");
+            console.table(errorItems);
             console.groupEnd();
         };
 
         if (!checker.isObjEmpty(message)) {
-            (() => setTimeout(() => setMessage({}), 1000))();
+            (() => setTimeout(() => setMessage({}), 1500))();
         }
 
         printStates();
-    }, [size, currSize, numSelected, errorItems, selectedItems, limits, message]);
+    }, [size, currSize, numSelected, errorItems, selectedItems, limits, message, handleOnChange]);
 
     return (
-        <div id={currComponentId} className="" style={style}>
-            <div className="container">
-                <Message {...message} />
-                <h1>{currComponentTitle}</h1>
-                {ingredientsGroupedByInitials.map((group) =>
-                    createIngredientsGroup({
-                        group,
-                        handleChangeIcon,
-                        handleIngredientTick,
-                        errorItems,
-                        showIcons,
-                        selectedItems,
-                    })
-                )}
-            </div>
-        </div>
+        //<div id={currComponentId} className="" style={style}>
+        <Container id={currComponentId} title={currComponentTitle}>
+            <Dialog {...message} />
+            {ingredientsGroupedByInitials.map((group) =>
+                createIngredientsGroup({
+                    group,
+                    handleChangeIcon,
+                    handleIngredientTick,
+                    errorItems,
+                    showIcons,
+                    selectedItems,
+                })
+            )}
+        </Container>
+        //</div>
     );
 };
 
@@ -331,7 +350,6 @@ const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked }) =>
     const idRadioCenter = `id-radio-center-icons-${ingredientName}`;
     const idRadioRight = `id-radio-right-icons-${ingredientName}`;
     const groupName = `group-radio-${ingredientName}`;
-    console.log("radioChecked", radioChecked);
 
     const onChange = (event) => {
         //console.log("sono radio");
