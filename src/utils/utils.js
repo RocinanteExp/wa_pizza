@@ -61,9 +61,27 @@ function containsObj(array, searchValue, property) {
  *@param {String}
  *@returns {Object}
  **/
-function findObj(array, searchValue, property) {
+function findObj(array, property, searchValue) {
     const ret = array.find((obj) => obj[property] === searchValue);
     return ret;
+}
+
+/**
+ * Find an obj with obj[property] === searchValue inside array
+ *
+ *@param {Array} of Objects
+ *@param {Any}
+ *@param {String}
+ *@returns {Object}
+ **/
+function indexOfObj(array, property, targetValue) {
+    for (const [index, elem] of array.entries()) {
+        if (elem[property] === targetValue) {
+            return index;
+        }
+    }
+
+    return -1;
 }
 
 const exportsObj = {
@@ -74,6 +92,7 @@ const exportsObj = {
     containsObj,
     findObj,
     removeObjFromArrayInPlace,
+    indexOfObj
 };
 
 export default exportsObj;
