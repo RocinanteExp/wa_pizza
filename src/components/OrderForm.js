@@ -2,7 +2,7 @@ import "../styles/App.css";
 import { useState, useEffect } from "react";
 import { PizzaIngredientsMenu } from "./IngredientsMenu";
 import { Counter } from "./Counter";
-import Container from "./Container";
+import { Container } from "./Container";
 import sys from "../utils/constants";
 import utils from "../utils/utils";
 

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import sys from "../utils/constants";
 import checker from "../utils/checker";
 import Dialog from "./Dialog";
-import Container from "./Container";
+import { Container, ContainerFlex, Border } from "./Container";
 import print from "../utils/printer";
 
 /**
@@ -36,46 +36,143 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
         marginBottom: "1.5rem",
     };
 
-    const isAPossibleChoice = (oldSide, newSide) => {
+    const isAPossibleChoiceTick = () => {
         switch (currSize) {
             case sys.PIZZA_SIZES.SMALL:
             case sys.PIZZA_SIZES.MEDIUM: {
                 return numSelected.both < limits.both;
             }
             case sys.PIZZA_SIZES.LARGE: {
-                if (oldSide && oldSide !== newSide) {
-                    if (oldSide === "both") return true;
-                    else if (newSide === "both") {
-                        if (oldSide === "left") return numSelected["right"] + 1 <= limits["right"];
-                        else return numSelected["left"] + 1 <= limits["left"];
-                    } else if (newSide === "left") {
-                        return numSelected.left + 1 <= limits.left;
-                    } else if (newSide === "right") {
-                        return numSelected.right + 1 <= limits.right;
-                    } else {
-                        console.log("ERROR: in isAPossibleChoice", oldSide, newSide);
-                    }
-                } else if (!oldSide && newSide) {
-                    if (newSide === "both") {
-                        return numSelected["left"] + 1 <= limits["left"] && numSelected["left"] + 1 <= limits["left"];
-                    } else if (newSide === "left") {
-                        return numSelected.left + 1 <= limits.left;
-                    } else if (newSide === "right") {
-                        return numSelected.right + 1 <= limits.right;
-                    } else {
-                        console.log("ERROR: in isAPossibleChoice", oldSide, newSide);
-                    }
-                }
                 return numSelected.left + numSelected.right < limits.left + limits.right;
             }
             default: {
-                console.group("default case in isAPossibleChoice");
+                console.group("default case in isAPossibleChoiceTick");
                 console.error("currSize", currSize);
                 console.groupEnd();
             }
         }
 
         return null;
+    };
+
+    const isAPossibleChoiceRadio = (oldSide, newSide) => {
+        if (currSize === sys.PIZZA_SIZES.LARGE) {
+            if (oldSide && oldSide !== newSide) {
+                if (oldSide === "both") return true;
+                else if (newSide === "both") {
+                    if (oldSide === "left") return numSelected["right"] + 1 <= limits["right"];
+                    else return numSelected["left"] + 1 <= limits["left"];
+                } else if (newSide === "left") {
+                    return numSelected.left + 1 <= limits.left;
+                } else if (newSide === "right") {
+                    return numSelected.right + 1 <= limits.right;
+                } else {
+                    console.log("ERROR: in isAPossibleChoiceRadio", oldSide, newSide);
+                }
+            } else if (!oldSide && newSide) {
+                if (newSide === "both") {
+                    return numSelected["left"] + 1 <= limits["left"] && numSelected["left"] + 1 <= limits["left"];
+                } else if (newSide === "left") {
+                    return numSelected.left + 1 <= limits.left;
+                } else if (newSide === "right") {
+                    return numSelected.right + 1 <= limits.right;
+                } else {
+                    console.log("ERROR: in isAPossibleChoiceRadio", oldSide, newSide);
+                }
+            }
+        } else {
+            console.group("default case in isAPossibleChoiceRadio");
+            console.error("currSize", currSize);
+            console.groupEnd();
+        }
+        return null;
+    };
+
+    // find the sides which must be updated in numSelected each time an ingredient has been tick/tick off
+    // for small/medium pizza this side is always equal to both
+    // for large pizza this could be: left, right or left+right (the latter is true is the side of the ingredient is both)
+    const findSidesThatNeedUpdate = (ingredient) => {
+        if (currSize === sys.PIZZA_SIZES.LARGE && ingredient.side === sys.PIZZA_SIDES.BOTH) {
+            return [sys.PIZZA_SIDES.LEFT, sys.PIZZA_SIDES.RIGHT];
+        }
+
+        return [ingredient.side];
+    };
+
+    const opcode = {
+        MINUS: 0,
+        PLUS: 1,
+        SWITCH: 2,
+    };
+
+    // utility function
+    const updateNumSelected = (operation, ingredient, newIngredient) => {
+        // find which sides of numSelected need to be updated
+        const sidesToBeUpdated = findSidesThatNeedUpdate(ingredient);
+
+        const opOnNumSelected = (side, op, quantity) => {
+            switch (op) {
+                case opcode.MINUS: {
+                    return { [side]: numSelected[side] - quantity };
+                }
+                case opcode.PLUS: {
+                    return { [side]: numSelected[side] + quantity };
+                }
+                default:
+                    break;
+            }
+        };
+
+        switch (operation) {
+            case "delete": {
+                // for each side create an object with obj.side = numSelected[side] - 1
+                const updatedNumSelected = sidesToBeUpdated.map((side) => opOnNumSelected(side, opcode.MINUS, 1));
+
+                // update the state of numSelected
+                setNumSelected(() => Object.assign({}, numSelected, ...updatedNumSelected));
+                break;
+            }
+            case "add": {
+                // for each side create an object with obj.side = numSelected[side] + 1
+                const updatedNumSelected = sidesToBeUpdated.map((side) => opOnNumSelected(side, opcode.PLUS, 1));
+
+                // update the state of numSelected
+                setNumSelected(() => Object.assign({}, numSelected, ...updatedNumSelected));
+
+                break;
+            }
+            case "switch": {
+                if (ingredient.side === sys.PIZZA_SIDES.BOTH) {
+                    if (newIngredient.side === sys.PIZZA_SIDES.LEFT)
+                        setNumSelected({ ...numSelected, ...opOnNumSelected(sys.PIZZA_SIDES.RIGHT, opcode.MINUS, 1) });
+                    else if (newIngredient.side === sys.PIZZA_SIDES.RIGHT)
+                        setNumSelected({ ...numSelected, ...opOnNumSelected(sys.PIZZA_SIDES.LEFT, opcode.MINUS, 1) });
+                } else if (ingredient.side === sys.PIZZA_SIDES.LEFT) {
+                    if (newIngredient.side === sys.PIZZA_SIDES.BOTH)
+                        setNumSelected({ ...numSelected, ...opOnNumSelected(sys.PIZZA_SIDES.RIGHT, opcode.PLUS, 1) });
+                    else if (newIngredient.side === sys.PIZZA_SIDES.RIGHT)
+                        setNumSelected({
+                            ...numSelected,
+                            ...opOnNumSelected(sys.PIZZA_SIDES.LEFT, opcode.MINUS, 1),
+                            ...opOnNumSelected(sys.PIZZA_SIDES.RIGHT, opcode.PLUS, 1),
+                        });
+                } else if (ingredient.side === sys.PIZZA_SIDES.RIGHT) {
+                    if (newIngredient.side === sys.PIZZA_SIDES.BOTH)
+                        setNumSelected({ ...numSelected, ...opOnNumSelected(sys.PIZZA_SIDES.LEFT, opcode.PLUS, 1) });
+                    else if (newIngredient.side === sys.PIZZA_SIDES.LEFT)
+                        setNumSelected({
+                            ...numSelected,
+                            ...opOnNumSelected(sys.PIZZA_SIDES.LEFT, opcode.PLUS, 1),
+                            ...opOnNumSelected(sys.PIZZA_SIDES.RIGHT, opcode.MINUS, 1),
+                        });
+                } else {
+                    print.err("case 'switch' not implemented in updatedNumSelected");
+                }
+                break;
+            }
+            default:
+                print.err("not implemented in updatedNumSelected");
+        }
     };
 
     const handleIngredientTick = (event) => {
@@ -105,35 +202,6 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
             }
         }
 
-        // find the sides which must be updated in numSelected each time an ingredient has been tick/tick off
-        // for small/medium pizza this side is always equal to both
-        // for large pizza this could be: left, right or left+right (the latter is true is the side of the ingredient is both)
-        const findSidesThatNeedUpdate = (ingredient) => {
-            if (currSize === sys.PIZZA_SIZES.LARGE && ingredient.side === sys.PIZZA_SIDES.BOTH) {
-                return [sys.PIZZA_SIDES.LEFT, sys.PIZZA_SIDES.RIGHT];
-            }
- 
-            return [ingredient.side];
-        };
-
-        const updateNumSelected = (fromState, ingredient) => {
-            switch (fromState) {
-                case "delete": {
-                    // find which sides of numSelected need to be updated
-                    const sidesToBeUpdated = findSidesThatNeedUpdate(ingredient);
-
-                    // for each side create an object with obj.side = numSelected[side] - 1
-                    const updatedNumSelected = sidesToBeUpdated.map((side) => ({ [side]: numSelected[side] - 1 }));
-
-                    // update the state of numSelected
-                    setNumSelected(() => Object.assign({}, numSelected, ...updatedNumSelected));
-                    break;
-                }
-                default:
-                    print.err("not implemented in updatedNumSelected");
-            }
-        };
-
         // update the numSelected immediately if the pizza is either small or medium because
         // it is going to update always numSelected.both
         function shouldUpdateNumSelected() {
@@ -144,7 +212,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
 
         if (isChecked) {
             // check if the user can still choose more ingredients
-            const isPossible = isAPossibleChoice();
+            const isPossible = isAPossibleChoiceTick();
             if (!isPossible) {
                 setMessage({
                     type: "warning",
@@ -214,79 +282,68 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
     // when you click the icon of the pizza
     const handleChangeIcon = (event) => {
         // TODO handle splits of multi-words => now the ids are represented with a space "both-frutti di mare"
-        const sidePizza = event.target.value.split("-")[0];
-        const ingredientName = utils.capitalize(event.target.value.split("-")[1]);
+        const ingredientFields = event.target.value.split("-");
 
-        const indexSelectedItems = selectedItems.map((e) => e.name).indexOf(ingredientName);
-        if (indexSelectedItems < 0)
-            console.log("ERROR: ingredient not found in the selectedItems from handleChangeIcon");
-
-        const targetIngredient = { ...selectedItems[indexSelectedItems] };
-
-        print.grp("sono handleChangeIcon");
-        print.out("name:", ingredientName, "side:", sidePizza);
-        print.out("ingredientObj:", targetIngredient);
+        // target ingredient
+        const newIngredient = { name: utils.capitalize(ingredientFields[1]), side: ingredientFields[0] };
+        print.grp("handleChangeIcon");
+        print.out(newIngredient);
         print.grpend();
 
-        console.group("isPossible choice");
+        // remove item from selectedItems
+        const foundIngredient = utils.findObj(selectedItems, "name", newIngredient.name);
+        if (!foundIngredient) print.err("ingredient not found in the selectedItems from handleChangeIcon");
+
+        const oldIngredient = { ...foundIngredient };
+
+        print.grp("isAPossibleChoiceRadio");
         // check if the chosen pizza's side selection is available
-        if (!isAPossibleChoice(targetIngredient.side, sidePizza)) {
-            console.log("oldside:", targetIngredient.side, "newside:", sidePizza);
-            console.log(false);
-            console.groupEnd();
+        if (!isAPossibleChoiceRadio(oldIngredient.side, newIngredient.side)) {
+            print.out("failed oldside:", oldIngredient.side, " => newside:", newIngredient.side);
+            print.grpend();
 
             // set info message
             setMessage({
-                type: "info",
-                message: `Il numero massimo di ingredienti per ${sidePizza} è stata raggiunta ${limits[sidePizza]}`,
+                type: "warning",
+                message: `Il numero massimo di ingredienti per ${newIngredient.side} è stata raggiunta ${
+                    limits[newIngredient.side]
+                }`,
             });
             return;
-        } else {
-            console.log("oldside:", targetIngredient.side, "newside:", sidePizza);
-            console.log(true);
         }
-        console.groupEnd();
+
+        print.out("switched oldside:", oldIngredient.side, "=> newside:", newIngredient.side);
+        print.grpend();
 
         // update the numSelected items
-        const isNewIngredient = targetIngredient.side ? false : true;
+        const doesHaveSide = oldIngredient.side ? true : false;
+
         // update the selected items
-        if (isNewIngredient) {
-            if (sidePizza === "both") {
-                setNumSelected({ ...numSelected, right: numSelected["right"] + 1, left: numSelected["left"] + 1 });
-            } else {
-                setNumSelected({ ...numSelected, [sidePizza]: numSelected[sidePizza] + 1 });
-            }
+        if (doesHaveSide) {
+            updateNumSelected("switch", oldIngredient, newIngredient);
         } else {
-            if (targetIngredient.side === "both") {
-                if (sidePizza === "both") return;
-                else if (sidePizza === "left") setNumSelected({ ...numSelected, right: numSelected["right"] - 1 });
-                else if (sidePizza === "right") setNumSelected({ ...numSelected, left: numSelected["left"] - 1 });
-            } else if (targetIngredient.side === "left") {
-                if (sidePizza === "both") setNumSelected({ ...numSelected, right: numSelected["right"] + 1 });
-                else if (sidePizza === "left") return;
-                else if (sidePizza === "right")
-                    setNumSelected({ ...numSelected, left: numSelected["left"] + 1, right: numSelected["right"] - 1 });
-            } else if (targetIngredient.side === "right") {
-                if (sidePizza === "both") setNumSelected({ ...numSelected, left: numSelected["left"] + 1 });
-                else if (sidePizza === "left")
-                    setNumSelected({ ...numSelected, right: numSelected["right"] - 1, left: numSelected["left"] + 1 });
-                else if (sidePizza === "right") return;
-            }
+            updateNumSelected("add", newIngredient);
         }
 
-        targetIngredient.side = sidePizza;
+        const indexSelectedItems = utils.indexOfObj(selectedItems, "name", newIngredient.name);
+        const copySelectedItems = utils.removeItemFromArray(selectedItems, indexSelectedItems);
 
-        const newSelectedItems = utils.removeItemFromArray(selectedItems, indexSelectedItems);
-        newSelectedItems.push(targetIngredient);
-        setSelectedItems(newSelectedItems);
-        handleOnChange(newSelectedItems);
+        copySelectedItems.push(newIngredient);
 
-        // update the error list
-        const indexErrorItems = errorItems.map((e) => e.name).indexOf(ingredientName);
-        if (indexErrorItems >= 0) {
-            const newErrorItems = utils.removeItemFromArray(selectedItems, indexErrorItems);
-            setErrorItems(newErrorItems);
+        setSelectedItems(copySelectedItems);
+
+        // remote item from errorItems
+        // the ingredient may be in the errorItems
+        // the user has choose a side for the current ingredient
+        const copyErrorItems = [...errorItems];
+        const deletedErrorItems = utils.removeObjFromArrayInPlace(copyErrorItems, "name", newIngredient.name);
+
+        if (deletedErrorItems.length > 0) {
+            setErrorItems(copyErrorItems);
         }
+
+        //update state parent
+        handleOnChange(copySelectedItems);
     };
 
     useEffect(() => {
@@ -300,15 +357,15 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
             handleOnChange([]);
         }
         const printStates = () => {
-            console.group("States of PizzaIngredientsMenu");
-            console.log("size", size);
-            console.log("numSelected", numSelected);
-            console.log("limits", limits);
-            console.log("selectedItems");
-            console.table(selectedItems);
-            console.log("errorItems");
-            console.table(errorItems);
-            console.groupEnd();
+            print.grp("States of PizzaIngredientsMenu");
+            print.out("size", size);
+            print.out("numSelected", numSelected);
+            print.out("limits", limits);
+            print.out("selectedItems");
+            print.tb(selectedItems);
+            print.out("errorItems");
+            print.tb(errorItems);
+            print.grpend();
         };
 
         if (!checker.isObjEmpty(message)) {
@@ -337,14 +394,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
     );
 };
 
-const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked }) => {
-    const style = {
-        width: "1.25rem",
-        height: "1.25rem",
-        borderRadius: "50%",
-        backgroundColor: "green",
-    };
-
+const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked, isError }) => {
     const id = `id-container-icons-${ingredientName}`;
     const idRadioLeft = `id-radio-left-icons-${ingredientName}`;
     const idRadioCenter = `id-radio-center-icons-${ingredientName}`;
@@ -352,53 +402,52 @@ const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked }) =>
     const groupName = `group-radio-${ingredientName}`;
 
     const onChange = (event) => {
-        //console.log("sono radio");
-        //console.log(event.target.checked);
-        //console.log(event.target.value);
         handleChangeIcon(event);
     };
 
     return (
-        <div id={id} className="container-flex flex-cross-center">
-            <div className="container-flex pos-relative">
-                <input
-                    type="radio"
-                    checked={radioChecked === "left"}
-                    onChange={onChange}
-                    id={idRadioLeft}
-                    name={groupName}
-                    value={`left-${ingredientName}`}
-                ></input>
-                <label htmlFor={idRadioLeft} className="left-half-circle bg-black toggle"></label>
-                <label htmlFor={idRadioLeft} className="right-half-circle bg-white"></label>
-            </div>
+        <Border type={isError ? "error" : "none"}>
+            <ContainerFlex id={id} crossAxis="center">
+                <ContainerFlex>
+                    <input
+                        type="radio"
+                        checked={radioChecked === "left"}
+                        onChange={onChange}
+                        id={idRadioLeft}
+                        name={groupName}
+                        value={`left-${ingredientName}`}
+                    ></input>
+                    <label htmlFor={idRadioLeft} className="left-half-circle bg-black toggle"></label>
+                    <label htmlFor={idRadioLeft} className="right-half-circle bg-white"></label>
+                </ContainerFlex>
 
-            <div className="container-flex pos-relative">
-                <input
-                    type="radio"
-                    checked={radioChecked === "both"}
-                    onChange={onChange}
-                    id={idRadioCenter}
-                    name={groupName}
-                    value={`both-${ingredientName}`}
-                ></input>
-                <label htmlFor={idRadioCenter} className="left-half-circle bg-black toggle"></label>
-                <label htmlFor={idRadioCenter} className="right-half-circle bg-black toggle"></label>
-            </div>
+                <ContainerFlex>
+                    <input
+                        type="radio"
+                        checked={radioChecked === "both"}
+                        onChange={onChange}
+                        id={idRadioCenter}
+                        name={groupName}
+                        value={`both-${ingredientName}`}
+                    ></input>
+                    <label htmlFor={idRadioCenter} className="left-half-circle bg-black toggle"></label>
+                    <label htmlFor={idRadioCenter} className="right-half-circle bg-black toggle"></label>
+                </ContainerFlex>
 
-            <div className="container-flex pos-relative">
-                <input
-                    type="radio"
-                    checked={radioChecked === "right"}
-                    onChange={onChange}
-                    id={idRadioRight}
-                    name={groupName}
-                    value={`right-${ingredientName}`}
-                ></input>
-                <label htmlFor={idRadioRight} className="left-half-circle bg-white"></label>
-                <label htmlFor={idRadioRight} className="right-half-circle bg-black toggle"></label>
-            </div>
-        </div>
+                <ContainerFlex>
+                    <input
+                        type="radio"
+                        checked={radioChecked === "right"}
+                        onChange={onChange}
+                        id={idRadioRight}
+                        name={groupName}
+                        value={`right-${ingredientName}`}
+                    ></input>
+                    <label htmlFor={idRadioRight} className="left-half-circle bg-white"></label>
+                    <label htmlFor={idRadioRight} className="right-half-circle bg-black toggle"></label>
+                </ContainerFlex>
+            </ContainerFlex>
+        </Border>
     );
 };
 
@@ -433,8 +482,8 @@ const CreateIngredientRow = ({
             <label className="container-flex flex-cross-center" htmlFor={inputId}>
                 {displayName}
             </label>
-            {showIcons && isChecked && createPizzaIcons({ ingredientName, handleChangeIcon, radioChecked })}
-            {isError && <div>ERRORE</div>}
+            {showIcons && isChecked && createPizzaIcons({ ingredientName, handleChangeIcon, radioChecked, isError })}
+            {null && isError && <div>ERRORE</div>}
         </div>
     );
 };
@@ -470,7 +519,7 @@ function createIngredientsGroup({
                     tickChecked = true;
                 }
 
-                const ingredient = utils.findObj(selectedItems, utils.capitalize(ingredientName), "name");
+                const ingredient = utils.findObj(selectedItems, "name", utils.capitalize(ingredientName));
                 if (ingredient && ingredient.side) radioChecked = ingredient.side;
                 //console.group("group radio checked");
                 //console.log(ingredient, radioChecked);
