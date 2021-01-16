@@ -311,3 +311,19 @@ input[type="checkbox"]:checked + label:after {
 .select:hover {
     border-color: #888;
 }
+
+del {
+    text-decoration-color: red;
+    text-decoration-thickness: 3px;
+}
+
+ins {
+    text-decoration: none;
+    font-family: "Caveat", cursive;
+    font-size: 1.5em;
+    color: red;
+    position: absolute;
+    transform: rotate(-10deg);
+    margin-left: -1.25rem;
+    margin-top: -2.8125rem;
+}

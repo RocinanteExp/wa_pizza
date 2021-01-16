@@ -4,7 +4,7 @@ import "../styles/Dialog.css";
  * @param {String} type. Allowed types {info, error}
  **/
 const Dialog = ({ message, type }) => {
-    if (!(type && message)) return null;
+    if (!(type)) return null;
 
     return (
         <div className={`dialog dialog-${type}`}>
@@ -14,7 +14,6 @@ const Dialog = ({ message, type }) => {
 };
 
 const CenterDialog = ({ message, type }) => {
-
     const style = {
         position: "absolute",
         top: "50%",

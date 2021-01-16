@@ -55,14 +55,14 @@ const PizzaSize = ({ sizesName, maxPerPizza, handles }) => {
     );
 };
 
-const PizzaRequests = ({ setPizzaRequests }) => {
+const PizzaRequests = ({ handles }) => {
     const currComponentId = "id-container-pizza-requests";
     const currComponentTitle = "Richieste";
     const styles = { marginBottom: "1.5rem" };
 
     const handleChange = (event) => {
-        if (event.target.checked) setPizzaRequests(event.target.value);
-        else setPizzaRequests(undefined);
+        if (event.target.checked) handles.onChange(event.target.value);
+        else handles.onChange(undefined);
     };
 
     return (
@@ -86,18 +86,8 @@ const PizzaQuantity = ({ handles, size, max = 0 }) => {
 
     const currComponentId = "id-container-pizza-quantity";
     const currComponentTitle = "Quantità";
-    const buttonSubmitId = "id-btn-aggiungi";
 
     const styles = { marginBottom: "1.5rem" };
-
-    const generateText = () => {
-        if (!size) return "Niente";
-
-        const totPrices = sys.PIZZA_PRICES[size.toUpperCase()] * currQuantity;
-        const text = `Aggiungi ${currQuantity} articoli all'ordine ${totPrices} €`;
-
-        return text;
-    };
 
     const handleChangeCurrQuantity = (quantity) => {
         setCurrQuantity(quantity);
@@ -113,9 +103,6 @@ const PizzaQuantity = ({ handles, size, max = 0 }) => {
     return (
         <Container id={currComponentId} style={styles} title={currComponentTitle}>
             <Counter min={Math.min(1, max)} max={max} callback={(quantity) => handleChangeCurrQuantity(quantity)} />
-            <Button id={buttonSubmitId} color="dark" handles={{ onClick: handles.onSubmit }}>
-                {generateText()}
-            </Button>
         </Container>
     );
 };
@@ -148,6 +135,7 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
         print.tb(pizzaIngredients);
         print.out("pizza quantity:", pizzaQuantity);
         print.out("pizza size:", pizzaSize);
+        print.out("pizza requests:", pizzaRequests);
         print.grpend();
 
         // remove the message dialog from the screen after 1,75s
@@ -158,13 +146,17 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
         if (pizzaSize && maxQuantityPerPizza[pizzaSize] === 0) {
             setPizzaSize("");
         }
-    }, [pizzaSize, maxQuantityPerPizza, message, pizzaIngredients, pizzaQuantity]);
+    }, [pizzaSize, maxQuantityPerPizza, message, pizzaIngredients, pizzaQuantity, pizzaRequests]);
 
     // handler for PizzaSize component
     // @param {String} ingredient
     // @param {Boolean} status. The checkbox's status associated to the ingredient
     const handleChangePizzaSize = (size) => {
         setPizzaSize(size);
+    };
+
+    const handleChangePizzaRequests = (requests) => {
+        setPizzaRequests(requests);
     };
 
     // handler for onSubmit event associated to the button "Aggiungi".
@@ -175,7 +167,7 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
             pizzaIngredients,
             pizzaQuantity,
             sys.PIZZA_PRICES[pizzaSize.toUpperCase()],
-            pizzaQuantity
+            pizzaRequests
         );
 
         const { error } = utils.validateOrder(order);
@@ -197,6 +189,34 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
         handles.onSubmit(order);
     };
 
+    const buttonSubmitId = "id-btn-aggiungi";
+
+    const generateText = () => {
+        if (!pizzaSize) return "Niente";
+
+        let totPrices = sys.PIZZA_PRICES[pizzaSize.toUpperCase()] * pizzaQuantity;
+        const text = `Aggiungi ${pizzaQuantity} articoli all'ordine `;
+
+        if (pizzaSize === sys.PIZZA_SIZES.LARGE) {
+            const hasFruttiDiMare = pizzaIngredients.some((i) => i.name.toLowerCase() === "frutti di mare");
+            if (hasFruttiDiMare) totPrices = totPrices * 1.2;
+        }
+
+        return (
+            <span>
+                {text}
+                {pizzaQuantity >= 3 ? (
+                    <>
+                        <del>{`${totPrices}€`} </del>
+                        <ins> {Number(totPrices * 0.9).toFixed(2)}€</ins>
+                    </>
+                ) : (
+                    " " + totPrices + "€"
+                )}
+            </span>
+        );
+    };
+
     return (
         <div id={currComponentId} className="container-small">
             <PizzaSize
@@ -205,12 +225,15 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
                 handles={{ onChange: handleChangePizzaSize }}
             />
             <PizzaIngredientsMenu size={pizzaSize} handleOnChange={handleChangePizzaIngredients} />
-            <PizzaRequests {...{ setPizzaRequests }} />
+            <PizzaRequests handles={{ onChange: handleChangePizzaRequests }} />
             <PizzaQuantity
                 size={pizzaSize}
                 max={maxQuantityPerPizza[pizzaSize]}
                 handles={{ onChange: handleChangeQuantity, onSubmit: handleSubmitButton }}
             />
+            <Button id={buttonSubmitId} color="dark" handles={{ onClick: handleSubmitButton }}>
+                {generateText()}
+            </Button>
             <CenterDialog {...message} />
         </div>
     );

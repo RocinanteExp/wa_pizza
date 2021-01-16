@@ -33,13 +33,6 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
 
     const ingredientsGroupedByInitials = groupByInitials(ingredientsName);
 
-    //const style = {
-    //    overflowY: "auto",
-    //    height: "min(800px, 50vh)",
-    //    scrollbarWidth: "thin",
-    //    marginBottom: "1.5rem",
-    //};
-
     const isAPossibleChoiceTick = () => {
         switch (currSize) {
             case sys.PIZZA_SIZES.SMALL:
@@ -218,6 +211,7 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
             // check if the user can still choose more ingredients
             const isPossible = isAPossibleChoiceTick();
             if (!isPossible) {
+                console.log("LIMITS", limits);
                 setMessage({
                     type: "warning",
                     message: `Puoi selezionare fino a ${Object.values(limits)} ingredienti per una pizza ${size}`,
@@ -380,9 +374,8 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
     }, [size, currSize, numSelected, errorItems, selectedItems, limits, message, handleOnChange]);
 
     return (
-        //<div id={currComponentId} className="" style={style}>
         <Container id={currComponentId} title={currComponentTitle}>
-            <Dialog {...message} />
+            <Dialog type="hidden" {...message} />
             {ingredientsGroupedByInitials.map((group) =>
                 createIngredientsGroup({
                     group,
@@ -420,6 +413,7 @@ const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked, isEr
                         id={idRadioLeft}
                         name={groupName}
                         value={`left-${ingredientName}`}
+                        disabled={ingredientName === "frutti di mare"}
                     ></input>
                     <label htmlFor={idRadioLeft} className="left-half-circle bg-black toggle"></label>
                     <label htmlFor={idRadioLeft} className="right-half-circle bg-white"></label>
@@ -446,10 +440,12 @@ const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked, isEr
                         id={idRadioRight}
                         name={groupName}
                         value={`right-${ingredientName}`}
+                        disabled={ingredientName === "frutti di mare"}
                     ></input>
                     <label htmlFor={idRadioRight} className="left-half-circle bg-white"></label>
                     <label htmlFor={idRadioRight} className="right-half-circle bg-black toggle"></label>
                 </ContainerFlex>
+                {isError ? <Dialog type="error" message="Seleziona una parte" /> : null}
             </ContainerFlex>
         </Border>
     );
@@ -475,13 +471,17 @@ const CreateIngredientRow = ({
     };
 
     return (
-        <div id={id} key={key} className="container-flex flex-cross-center flex-main-sb pos-relative">
+        <ContainerFlex id={id} key={key} crossAxis="center">
             <input checked={tickChecked} id={inputId} value={displayName} type="checkbox" onChange={onChange}></input>
-            <label className="container-flex flex-cross-center" htmlFor={inputId}>
+            <label
+                className="container-flex flex-cross-center"
+                style={{ minWidth: "max(50%, 20ch)" }}
+                htmlFor={inputId}
+            >
                 {displayName}
             </label>
             {showIcons && tickChecked && createPizzaIcons({ ingredientName, handleChangeIcon, radioChecked, isError })}
-        </div>
+        </ContainerFlex>
     );
 };
 
@@ -494,8 +494,8 @@ function createIngredientsGroup({
     selectedItems,
 }) {
     const initial = group[0].slice(0, 1).toUpperCase();
-    const key = `group-key-initial-${initial}`;
-    const id = `group-id-initial-${initial}`;
+    const key = `key-group-initial-${initial}`;
+    const id = `id-group-initial-${initial}`;
 
     return (
         <div key={key} id={id}>
@@ -518,9 +518,6 @@ function createIngredientsGroup({
 
                 const ingredient = utils.findObj(selectedItems, "name", utils.capitalize(ingredientName));
                 if (ingredient && ingredient.side) radioChecked = ingredient.side;
-                //console.group("group radio checked");
-                //console.log(ingredient, radioChecked);
-                //console.groupEnd();
 
                 let isError = false;
                 if (errornames.includes(utils.capitalize(ingredientName))) isError = true;
