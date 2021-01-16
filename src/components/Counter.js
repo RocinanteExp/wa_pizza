@@ -11,7 +11,8 @@ const Counter = ({ min, max, callback }) => {
         print.grpend();
         // update the OrderForm state pizzaQuantity
         callback(counter);
-        if(counter > max) setCounter(min);
+
+        if(counter > max || counter < min) setCounter(min);
     },[callback, counter, min, max]);
 
     const handleClick = (operation) => {

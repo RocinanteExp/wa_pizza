@@ -2,13 +2,20 @@ import "../styles/Container.css";
 
 const flexMap = {
     crossAxis: {
-        center: "flex-cross-center",
+        center: "flex-ca-center",
+    },
+    dir: {
+        column: "flex-dir-col",
+    },
+    mainAxis: {
+        spaceBetween: "flex-ma-sb",
     },
 };
 
-const Container = ({ id, title, children, className, style }) => {
+const Container = ({ id, key, title, children, className, style }) => {
+
     return (
-        <div id={id} className={`container${className ? " " + className : ""}`} style={style}>
+        <div id={id} key={key} className={`container${className ? " " + className : ""}`} style={style}>
             {title ? <h1>{title}</h1> : null}
             {children}
         </div>
@@ -28,11 +35,15 @@ const ContainerFlex = (props) => {
     const { dir, mainAxis, crossAxis } = props;
 
     let className = "container-flex ";
-    if (dir) className += dir + " ";
+    if (dir) className += flexMap["dir"][dir] + " ";
     if (mainAxis) className += flexMap["mainAxis"][mainAxis] + " ";
     if (crossAxis) className += flexMap["crossAxis"][crossAxis] + " ";
 
-    return <Container {...{ ...props, className }} />;
+    const style = {
+        flex: "1 1 auto",
+    };
+
+    return <Container {...{ ...props, className, style }} />;
 };
 
 const ContainerFixedSize = ({ id, title, children, className, style }) => {

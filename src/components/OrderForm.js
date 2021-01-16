@@ -6,6 +6,7 @@ import { CenterDialog } from "./Dialog";
 import { Container, ContainerFlex } from "./Container";
 import { Button } from "./Button";
 import sys from "../utils/constants";
+import Order from "../entities/Order";
 import utils from "../utils/utils";
 import checker from "../utils/checker";
 import print from "../utils/printer";
@@ -22,8 +23,7 @@ const PizzaSize = ({ sizesName, maxPerPizza, handles }) => {
         //console.log("active button => ", activeButton);
         //console.groupEnd();
         handles.onChange(activeButton);
-        if(maxPerPizza && maxPerPizza === 0) setActiveButton("");
-
+        if (maxPerPizza && activeButton && maxPerPizza[activeButton] === 0) setActiveButton("");
     }, [maxPerPizza, setActiveButton, activeButton, handles]);
 
     const handleOnClick = (buttonName) => {
@@ -81,7 +81,7 @@ const PizzaRequests = ({ setPizzaRequests }) => {
     );
 };
 
-const PizzaQuantity = ({ handles, size, max }) => {
+const PizzaQuantity = ({ handles, size, max = 0 }) => {
     const [currQuantity, setCurrQuantity] = useState(max);
 
     const currComponentId = "id-container-pizza-quantity";
@@ -91,14 +91,15 @@ const PizzaQuantity = ({ handles, size, max }) => {
     const styles = { marginBottom: "1.5rem" };
 
     const generateText = () => {
-        if (!size) return "Ancora niente";
+        if (!size) return "Niente";
+
         const totPrices = sys.PIZZA_PRICES[size.toUpperCase()] * currQuantity;
         const text = `Aggiungi ${currQuantity} articoli all'ordine ${totPrices} €`;
 
         return text;
     };
 
-    const onChange = (quantity) => {
+    const handleChangeCurrQuantity = (quantity) => {
         setCurrQuantity(quantity);
         handles.onChange(quantity);
     };
@@ -111,7 +112,7 @@ const PizzaQuantity = ({ handles, size, max }) => {
 
     return (
         <Container id={currComponentId} style={styles} title={currComponentTitle}>
-            <Counter min={Math.min(1, max)} max={max} callback={(quantity) => onChange(quantity)} />
+            <Counter min={Math.min(1, max)} max={max} callback={(quantity) => handleChangeCurrQuantity(quantity)} />
             <Button id={buttonSubmitId} color="dark" handles={{ onClick: handles.onSubmit }}>
                 {generateText()}
             </Button>
@@ -154,7 +155,7 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
             (() => setTimeout(() => setMessage({}), 1750))();
         }
 
-        if (maxQuantityPerPizza[pizzaSize] === 0) {
+        if (pizzaSize && maxQuantityPerPizza[pizzaSize] === 0) {
             setPizzaSize("");
         }
     }, [pizzaSize, maxQuantityPerPizza, message, pizzaIngredients, pizzaQuantity]);
@@ -169,12 +170,13 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
     // handler for onSubmit event associated to the button "Aggiungi".
     // If the order passes the check of the validator, it will be submitted to the parent container
     const handleSubmitButton = () => {
-        const order = {
-            size: pizzaSize,
-            quantity: pizzaQuantity,
-            requests: pizzaRequests,
-            ingredients: pizzaIngredients,
-        };
+        const order = new Order(
+            pizzaSize,
+            pizzaIngredients,
+            pizzaQuantity,
+            sys.PIZZA_PRICES[pizzaSize.toUpperCase()],
+            pizzaQuantity
+        );
 
         const { error } = utils.validateOrder(order);
 
@@ -206,7 +208,7 @@ const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
             <PizzaRequests {...{ setPizzaRequests }} />
             <PizzaQuantity
                 size={pizzaSize}
-                max={pizzaSize ? maxQuantityPerPizza[pizzaSize] : 0}
+                max={maxQuantityPerPizza[pizzaSize]}
                 handles={{ onChange: handleChangeQuantity, onSubmit: handleSubmitButton }}
             />
             <CenterDialog {...message} />

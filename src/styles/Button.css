@@ -16,6 +16,10 @@
     filter: brightness(75%);
 }
 
+button:hover {
+    cursor: pointer;
+}
+
 button:disabled {
     cursor: not-allowed;
 }

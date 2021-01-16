@@ -4,6 +4,7 @@ import { OrderForm } from "./OrderForm";
 import { OrderPreview } from "./OrderPreview";
 import sys from "../utils/constants";
 import utils from "../utils/utils";
+import Order from "../entities/Order";
 import print from "../utils/printer";
 
 //const MAX_NUM_PIZZA = { Small: 10, Medium: 5, Large: 10 };
@@ -40,8 +41,51 @@ const templateForm = {
  * All the current orders shown on the OrderPreview are stored in the state "orders".
  * Each time an order is been submitted from the OrderForm, the state "orders" is updated
  **/
+
+const debugOrders = [
+    new Order(
+        "medium",
+        [
+            { name: "Bacon", side: "both" },
+            { name: "Verdure", side: "both" },
+        ],
+        4, sys.PIZZA_PRICES["MEDIUM"]
+    ),
+    new Order(
+        "large",
+        [
+            { name: "Bacon", side: "left" },
+            { name: "Verdure", side: "right" },
+            { name: "Frutti di mare", side: "both" },
+        ],
+        4, sys.PIZZA_PRICES["LARGE"]
+    ),
+];
+
+//const debugOrders = [
+//    {
+//        size: "medium",
+//        quantity: 4,
+//        requests: undefined,
+//        ingredients: [
+//            { name: "Bacon", side: "both" },
+//            { name: "Verdure", side: "both" },
+//        ],
+//    },
+//    {
+//        size: "large",
+//        quantity: 4,
+//        requests: undefined,
+//        ingredients: [
+//            { name: "Bacon", side: "left" },
+//            { name: "Verdure", side: "right" },
+//            { name: "Frutti di mare", side: "both" },
+//        ],
+//    },
+//];
+
 const MainContent = () => {
-    const [orders, setOrders] = useState([]);
+    const [orders, setOrders] = useState(debugOrders);
     const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ ...sys.PIZZA_MAX_QUANTITIES });
 
     const opcode = {
@@ -72,7 +116,6 @@ const MainContent = () => {
     };
 
     const handleChangeMaxQuantityPerPizza = (value) => {
-        console.log("IPDAE", value);
         setMaxQuantityPerPizza((maxQuantityPerPizza) => ({ ...maxQuantityPerPizza, ...value }));
     };
 
@@ -95,7 +138,7 @@ const MainContent = () => {
                 maxQuantityPerPizza={maxQuantityPerPizza}
                 handles={{ onSubmit: handleSubmitOrders }}
             />
-            <OrderPreview orders={orders} handleOrderRemove={handleOrderRemove} />
+            <OrderPreview orders={orders} handles={{ onRemove: handleOrderRemove }} />
         </main>
     );
 };

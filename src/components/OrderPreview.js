@@ -1,4 +1,6 @@
-import constants from "../utils/constants";
+import sys from "../utils/constants";
+import { Container, ContainerFlex } from "./Container";
+import { Button } from "./Button";
 
 let keyCounter = 0;
 
@@ -28,46 +30,102 @@ const createQuantitySelect = (maxQuantity, defaultQuantity, callback) => {
 const createOrderBullet = (pizzaOrder, callback) => {
     const key = `key-li-${keyCounter++}`;
 
-    const { size, ingredients = [], requests, quantity: defSelection } = pizzaOrder;
+    //<li key={key} className="container-flex flex-cross-center">
 
+    const handleClickButton = (event) => {
+        console.log("SONO BOTTONE", event);
+        callback();
+    };
+
+    const { size, ingredients = [], requests, quantity } = pizzaOrder;
     return (
-        <li key={key} className="container-flex flex-cross-center">
-            {createQuantitySelect(constants.PIZZA_MAX_QUANTITIES[size], defSelection, callback)}
-            <div className="container-flex flex-column">
-                <span>{`Pizza ${size}`}</span>
-                <span>{`Ingredienti: ${ingredients.map(i => i.name).join(", ")}`}</span>
+        <ContainerFlex key={key} crossAxis="center">
+            <Button color="dark" aria-label="Close" handles={{ onClick: handleClickButton }}>
+                <span aria-hidden="true">&times;</span>
+            </Button>
+            <ContainerFlex dir="column">
+                <ContainerFlex mainAxis="spaceBetween">
+                    <span>{`${quantity} x Pizza ${size}`}</span>
+                    <span>{`${pizzaOrder.getSubTotal()} €`}</span>
+                </ContainerFlex>
+                <span>{`Ingredienti: ${ingredients.map((i) => i.name).join(", ")}`}</span>
                 <span>{`Richieste: ${requests ? requests : "none"}`}</span>
-            </div>
-        </li>
+                {pizzaOrder.extra ? (
+                    <ContainerFlex mainAxis="spaceBetween">
+                        <span>{`Extra: `}</span>
+                        <span>{`+${(pizzaOrder.getSubTotal() * pizzaOrder.extra) / 100} €`}</span>
+                    </ContainerFlex>
+                ) : null}
+            </ContainerFlex>
+        </ContainerFlex>
     );
 };
 
 const OrdersList = ({ orders, handleOrderRemove }) => {
     return (
-        <div>
-            <ul>
-                {orders.map((order, index) =>
-                    createOrderBullet(order, () => {
-                        handleOrderRemove(index);
-                    })
-                )}
-            </ul>
-        </div>
+        <Container>
+            {orders.map((order, index) =>
+                createOrderBullet(order, () => {
+                    handleOrderRemove(index);
+                })
+            )}
+        </Container>
     );
 };
 
-const OrderPreview = ({ orders, handleOrderRemove }) => {
+function computeSubTotal(orders) {
+    let total = 0;
+    orders.forEach((order) => (total += order.getSubTotal()));
+    return total;
+}
 
-    const style = {
-        margin: "0.35rem 0.9rem",
-    };
+function computeExtras(orders) {
+    let total = 0;
+    orders.forEach((order) => (total += order.getSubTotal() * order.extra));
+    return total / 100;
+}
+
+function totalNumPizza(orders) {
+    let total = 0;
+    orders.forEach((order) => (total += order.quantity));
+    return total;
+}
+
+function computeDiscount(orders) {
+    let total = 0;
+    orders.forEach((order) => (total += order.getSubTotalWithExtras() * order.discount));
+    return total / 100;
+}
+
+const OrderPreview = ({ orders, handles }) => {
+    const subTotal = computeSubTotal(orders);
+    const extras = computeExtras(orders);
+    const totQuantity = totalNumPizza(orders);
+    const discount = computeDiscount(orders);
 
     return (
-        <div id="id-order-preview">
-            <h1>Il tuo ordine</h1>
-            <OrdersList orders={orders} handleOrderRemove={handleOrderRemove} />
-            <button className="btn btn-submit">Ordina Adesso</button>
-        </div>
+        <Container id="id-order-preview" title="Il tuo Ordine">
+            <OrdersList orders={orders} handleOrderRemove={handles.onRemove} />
+            <ContainerFlex dir="column">
+                <ContainerFlex mainAxis="spaceBetween">
+                    <span>Subtotale:</span>
+                    <span>{subTotal ? `${subTotal} €` : subTotal}</span>
+                </ContainerFlex>
+                <ContainerFlex mainAxis="spaceBetween">
+                    <span>Costi aggiuntivi:</span>
+                    <span>{extras ? `+${extras} €` : extras}</span>
+                </ContainerFlex>
+                <ContainerFlex mainAxis="spaceBetween">
+                    <span>{`Sconto (${totQuantity ? "10%" : 0})`}</span>
+                    <span>{discount ? `-${discount} €` : 0}</span>
+                </ContainerFlex>
+                <ContainerFlex mainAxis="spaceBetween">
+                    <span>Totale complessivo:</span>
+                    <span>{`${subTotal + extras - discount} €`}</span>
+                </ContainerFlex>
+            </ContainerFlex>
+            <Button color="dark">Ordina Adesso</Button>
+        </Container>
     );
 };
 

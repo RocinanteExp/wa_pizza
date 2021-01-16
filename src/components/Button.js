@@ -9,7 +9,7 @@ const statusMap = {
     active: "btn-active",
 };
 
-const Button = ({ id, color, status = {}, handles, children }) => {
+const Button = ({ id, color, status = {}, handles, children, type }) => {
     //console.group("Button")
     //console.log(id);
     //console.log(status);
