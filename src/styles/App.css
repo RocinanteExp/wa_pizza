@@ -165,20 +165,6 @@ main > *:nth-child(2) {
 }
 
 /* || buttons */
-.btn {
-    font-size: 1.1rem;
-    padding: 0.5rem 0.75rem;
-    /*
-    border-radius: 0.5rem;
-    */
-    box-shadow: 0 2px 2px 0;
-    outline: none;
-}
-
-.btn-dark {
-    background: #333333;
-    color: white;
-}
 
 .btn.btn-round {
     font-size: 1.1rem;
@@ -201,16 +187,6 @@ main > *:nth-child(2) {
 
 .btn-not-active {
     opacity: 0.5;
-}
-
-.btn.btn-submit {
-    width: 50%;
-    box-shadow: 0 0 0 0;
-    background: black;
-    color: white;
-    font-size: x-large;
-    font-weight: bold;
-    min-width: 10ch;
 }
 
 .margin-bottom {

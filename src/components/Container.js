@@ -2,9 +2,9 @@ import "../styles/Container.css";
 
 const flexMap = {
     crossAxis: {
-        center: "flex-cross-center"
-    }
-}
+        center: "flex-cross-center",
+    },
+};
 
 const Container = ({ id, title, children, className, style }) => {
     return (
@@ -15,15 +15,24 @@ const Container = ({ id, title, children, className, style }) => {
     );
 };
 
+/**
+ * Default:
+ *  - className container-flex
+ *  - behavior: flex-wrap: wrap
+ * parameters:
+ *  - dir is used to set the direction of the flex container
+ *  - mainAxis is used to set the justify-content property
+ *  - crossAxis is used to set the align-items property
+ **/
 const ContainerFlex = (props) => {
-    const { dir, mainAxis, crossAxis} = props;
-    let className = "container-flex ";
-    if(dir) className += dir + " ";
-    if(mainAxis) className += flexMap["mainAxis"][mainAxis] + " ";
-    if(crossAxis) className += flexMap["crossAxis"][crossAxis] + " ";
+    const { dir, mainAxis, crossAxis } = props;
 
-    //const className = `container-flex ${dir} ${mainAxis} ${crossAxis} ` + props.className;
-    return <Container {...{...props, className}} />;
+    let className = "container-flex ";
+    if (dir) className += dir + " ";
+    if (mainAxis) className += flexMap["mainAxis"][mainAxis] + " ";
+    if (crossAxis) className += flexMap["crossAxis"][crossAxis] + " ";
+
+    return <Container {...{ ...props, className }} />;
 };
 
 const ContainerFixedSize = ({ id, title, children, className, style }) => {

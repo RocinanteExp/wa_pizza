@@ -2,51 +2,55 @@ import "../styles/App.css";
 import { useState, useEffect } from "react";
 import { PizzaIngredientsMenu } from "./IngredientsMenu";
 import { Counter } from "./Counter";
-import { Container } from "./Container";
+import { CenterDialog } from "./Dialog";
+import { Container, ContainerFlex } from "./Container";
+import { Button } from "./Button";
 import sys from "../utils/constants";
 import utils from "../utils/utils";
+import checker from "../utils/checker";
+import print from "../utils/printer";
 
-const createButtons = ({ name, classesArray, handleClick, text }) => {
-    const key = `key-btn-${name}`;
-
-    return (
-        <button key={key} className={`${classesArray.join(" ")}`} onClick={() => handleClick(name)}>
-            {text}
-        </button>
-    );
-};
-
-const PizzaSize = ({ sizes, handlerOnChange }) => {
-    const currComponentId = "id-container-pizza-size";
-    const currComponentTitle = "Dimensione Pizza";
-
-    const baseButtonClasses = ["btn", "btn-dark", "btn-not-active"];
-    const buttonsName = [...sizes];
-
-    const maxQuantityPerSize = sys.PIZZA_MAX_QUANTITIES;
-
+const PizzaSize = ({ sizesName, maxPerPizza, handles }) => {
     const [activeButton, setActiveButton] = useState("");
 
-    useEffect(() => {
-        console.group("states of PizzaSize");
-        console.log("active button => ", activeButton);
-        console.groupEnd();
-        handlerOnChange(activeButton);
-    });
+    const currComponentId = "id-container-pizza-size";
+    const currComponentTitle = "Dimensione Pizza";
+    const buttonsName = [...sizesName];
 
-    const handleClick = (buttonName) => {
+    useEffect(() => {
+        //console.group("states of PizzaSize");
+        //console.log("active button => ", activeButton);
+        //console.groupEnd();
+        handles.onChange(activeButton);
+        if(maxPerPizza && maxPerPizza === 0) setActiveButton("");
+
+    }, [maxPerPizza, setActiveButton, activeButton, handles]);
+
+    const handleOnClick = (buttonName) => {
         setActiveButton(buttonName);
     };
 
     return (
         <Container id={currComponentId} title={currComponentTitle} className="pizza-size-container margin-bottom">
-            <div className="container-flex">
+            <ContainerFlex>
                 {buttonsName.map((name) => {
-                    const classesArray = name === activeButton ? baseButtonClasses.slice(0, 2) : baseButtonClasses;
-                    const text = `${name} ${maxQuantityPerSize[name]}`;
-                    return createButtons({ name, classesArray, handleClick, text });
+                    let isDisabled = false;
+                    if (maxPerPizza[name] <= 0) isDisabled = true;
+                    const active = name === activeButton ? "active" : "inactive";
+                    const text = `${name.toUpperCase()} ${maxPerPizza[name]}`;
+
+                    return (
+                        <Button
+                            color="dark"
+                            key={`key-${name}`}
+                            status={{ active, disabled: isDisabled }}
+                            handles={{ onClick: () => handleOnClick(name) }}
+                        >
+                            {text}
+                        </Button>
+                    );
                 })}
-            </div>
+            </ContainerFlex>
         </Container>
     );
 };
@@ -77,80 +81,135 @@ const PizzaRequests = ({ setPizzaRequests }) => {
     );
 };
 
-const PizzaQuantity = ({ handlerOnChange, size }) => {
-    const MAX_QUANTITY = sys.PIZZA_MAX_QUANTITIES[size];
-    const MIN_QUANTITY = 1;
+const PizzaQuantity = ({ handles, size, max }) => {
+    const [currQuantity, setCurrQuantity] = useState(max);
 
     const currComponentId = "id-container-pizza-quantity";
     const currComponentTitle = "Quantità";
+    const buttonSubmitId = "id-btn-aggiungi";
 
     const styles = { marginBottom: "1.5rem" };
 
+    const generateText = () => {
+        if (!size) return "Ancora niente";
+        const totPrices = sys.PIZZA_PRICES[size.toUpperCase()] * currQuantity;
+        const text = `Aggiungi ${currQuantity} articoli all'ordine ${totPrices} €`;
+
+        return text;
+    };
+
+    const onChange = (quantity) => {
+        setCurrQuantity(quantity);
+        handles.onChange(quantity);
+    };
+
+    useEffect(() => {
+        print.grp("PizzaQuantity");
+        print.out(currQuantity);
+        print.grpend();
+    });
+
     return (
-        <div id={currComponentId} style={styles}>
-            <h1>{currComponentTitle}</h1>
-            <Counter min={MIN_QUANTITY} max={MAX_QUANTITY} callback={(quantity) => handlerOnChange(quantity)} />
-        </div>
+        <Container id={currComponentId} style={styles} title={currComponentTitle}>
+            <Counter min={Math.min(1, max)} max={max} callback={(quantity) => onChange(quantity)} />
+            <Button id={buttonSubmitId} color="dark" handles={{ onClick: handles.onSubmit }}>
+                {generateText()}
+            </Button>
+        </Container>
     );
 };
 
 // the ingredient's name must be unique
-const OrderForm = ({ templateForm, handleOrderSubmit }) => {
+const OrderForm = ({ sizes, maxQuantityPerPizza, handles }) => {
     const currComponentId = "id-order-form";
-    const buttonSubmitId = "id-btn-aggiungi";
 
-    const { sizes, ingredients } = templateForm;
     const [pizzaSize, setPizzaSize] = useState("");
     const [pizzaIngredients, setPizzaIngredients] = useState([]);
     const [pizzaRequests, setPizzaRequests] = useState(undefined);
     const [pizzaQuantity, setPizzaQuantity] = useState(-1);
+    const [message, setMessage] = useState({});
+
+    const handleChangeQuantity = (newQuantity) => {
+        setPizzaQuantity(newQuantity);
+    };
 
     // handler for PizzaIngredients component
     // @param {String} ingredient
     // @param {Boolean} status. The checkbox's status associated to the ingredient
-    const onChangeIngredients = (ingredients) => {
-        setPizzaIngredients(ingredients);
+    const handleChangePizzaIngredients = (ingredient) => {
+        setPizzaIngredients(ingredient);
     };
 
     useEffect(() => {
-        console.group("Pizza states (OrderForm)");
-        console.log("pizza ingredients");
-        console.table(pizzaIngredients);
-        console.log("pizza quantity:", pizzaQuantity);
-        console.log("pizza size:", pizzaSize);
-        console.groupEnd();
-    });
+        // print states of the component
+        print.grp("Pizza states (OrderForm)");
+        print.out("pizza ingredients");
+        print.tb(pizzaIngredients);
+        print.out("pizza quantity:", pizzaQuantity);
+        print.out("pizza size:", pizzaSize);
+        print.grpend();
+
+        // remove the message dialog from the screen after 1,75s
+        if (!checker.isObjEmpty(message)) {
+            (() => setTimeout(() => setMessage({}), 1750))();
+        }
+
+        if (maxQuantityPerPizza[pizzaSize] === 0) {
+            setPizzaSize("");
+        }
+    }, [pizzaSize, maxQuantityPerPizza, message, pizzaIngredients, pizzaQuantity]);
 
     // handler for PizzaSize component
     // @param {String} ingredient
     // @param {Boolean} status. The checkbox's status associated to the ingredient
-    const onChangeSize = (size) => {
+    const handleChangePizzaSize = (size) => {
         setPizzaSize(size);
     };
 
     // handler for onSubmit event associated to the button "Aggiungi".
     // If the order passes the check of the validator, it will be submitted to the parent container
-    const onSubmitButton = () => {
+    const handleSubmitButton = () => {
         const order = {
             size: pizzaSize,
             quantity: pizzaQuantity,
             requests: pizzaRequests,
             ingredients: pizzaIngredients,
         };
+
         const { error } = utils.validateOrder(order);
-        console.log(error);
-        if (!error) handleOrderSubmit(order);
+
+        if (error) {
+            setMessage({
+                type: "error",
+                message: error.message,
+            });
+
+            print.out(error);
+            return;
+        }
+
+        print.grp("Submitting order (OrderForm)");
+        print.out(order);
+        print.grpend();
+
+        handles.onSubmit(order);
     };
 
     return (
         <div id={currComponentId} className="container-small">
-            <PizzaSize sizes={sizes} handlerOnChange={onChangeSize} />
-            <PizzaIngredientsMenu ingredients={ingredients} size={pizzaSize} handleOnChange={onChangeIngredients} />
+            <PizzaSize
+                sizesName={sizes}
+                maxPerPizza={maxQuantityPerPizza}
+                handles={{ onChange: handleChangePizzaSize }}
+            />
+            <PizzaIngredientsMenu size={pizzaSize} handleOnChange={handleChangePizzaIngredients} />
             <PizzaRequests {...{ setPizzaRequests }} />
-            <PizzaQuantity size={pizzaSize} handlerOnChange={setPizzaQuantity} />
-            <button id={buttonSubmitId} onClick={onSubmitButton} className="btn btn-submit">
-                Aggiungi
-            </button>
+            <PizzaQuantity
+                size={pizzaSize}
+                max={pizzaSize ? maxQuantityPerPizza[pizzaSize] : 0}
+                handles={{ onChange: handleChangeQuantity, onSubmit: handleSubmitButton }}
+            />
+            <CenterDialog {...message} />
         </div>
     );
 };

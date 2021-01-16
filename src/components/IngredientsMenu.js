@@ -2,7 +2,7 @@ import utils from "../utils/utils";
 import { useState, useEffect } from "react";
 import sys from "../utils/constants";
 import checker from "../utils/checker";
-import Dialog from "./Dialog";
+import { Dialog } from "./Dialog";
 import { Container, ContainerFlex, Border } from "./Container";
 import print from "../utils/printer";
 
@@ -13,13 +13,7 @@ import print from "../utils/printer";
  * @param {Boolean} showIcons
  * @returns {Component} IngredientsMenu
  **/
-const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
-    const currComponentId = "id-container-pizza-ingredients-menu";
-    const currComponentTitle = "Aggiungi Ingredienti!";
-
-    const showIcons = size === sys.PIZZA_SIZES.LARGE ? true : false;
-    const limits = sys.PIZZA_MAX_INGREDIENTS[size];
-
+const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
     // states
     const [numSelected, setNumSelected] = useState({ left: 0, right: 0, both: 0 });
     const [selectedItems, setSelectedItems] = useState([]);
@@ -27,14 +21,24 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
     const [currSize, setCurrSize] = useState(size);
     const [message, setMessage] = useState({});
 
-    const ingredientsGroupedByInitials = groupByInitials(ingredients);
+    const currComponentId = "id-container-pizza-ingredients-menu";
+    const currComponentTitle = "Aggiungi Ingredienti!";
 
-    const style = {
-        overflowY: "auto",
-        height: "min(800px, 50vh)",
-        scrollbarWidth: "thin",
-        marginBottom: "1.5rem",
-    };
+    const ingredientsName =
+        size === sys.PIZZA_SIZES.LARGE
+            ? Object.values(sys.PIZZA_INGREDIENTS)
+            : Object.values(sys.PIZZA_INGREDIENTS).filter((i) => i !== "frutti di mare");
+    const showIcons = size === sys.PIZZA_SIZES.LARGE ? true : false;
+    const limits = sys.PIZZA_MAX_INGREDIENTS[size];
+
+    const ingredientsGroupedByInitials = groupByInitials(ingredientsName);
+
+    //const style = {
+    //    overflowY: "auto",
+    //    height: "min(800px, 50vh)",
+    //    scrollbarWidth: "thin",
+    //    marginBottom: "1.5rem",
+    //};
 
     const isAPossibleChoiceTick = () => {
         switch (currSize) {
@@ -183,7 +187,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
         if (!size) {
             setMessage({
                 type: "warning",
-                message: `Scegli prima la dimensione della pizza`,
+                message: `Prima devi scegliere la dimensione della pizza`,
             });
             return;
         }
@@ -216,7 +220,7 @@ const PizzaIngredientsMenu = ({ ingredients, handleOnChange, size }) => {
             if (!isPossible) {
                 setMessage({
                     type: "warning",
-                    message: `Puoi selezionare fino a ${Object.values(limits)} ingredienti per la pizza ${size}`,
+                    message: `Puoi selezionare fino a ${Object.values(limits)} ingredienti per una pizza ${size}`,
                 });
                 return;
             }
@@ -463,7 +467,6 @@ const CreateIngredientRow = ({
     const id = `id-row-${ingredientName}`;
     const inputId = `id-input-${ingredientName}`;
     const key = `key-${ingredientName}`;
-    const [isChecked, setIsChecked] = useState(false);
 
     const displayName = utils.capitalize(ingredientName);
 
@@ -471,19 +474,13 @@ const CreateIngredientRow = ({
         handleIngredientTick(event);
     };
 
-    useEffect(() => {
-        //console.log("rendering", isChecked, checkit);
-        setIsChecked(tickChecked);
-    }, [tickChecked, isChecked]);
-
     return (
         <div id={id} key={key} className="container-flex flex-cross-center flex-main-sb pos-relative">
-            <input checked={isChecked} id={inputId} value={displayName} type="checkbox" onChange={onChange}></input>
+            <input checked={tickChecked} id={inputId} value={displayName} type="checkbox" onChange={onChange}></input>
             <label className="container-flex flex-cross-center" htmlFor={inputId}>
                 {displayName}
             </label>
-            {showIcons && isChecked && createPizzaIcons({ ingredientName, handleChangeIcon, radioChecked, isError })}
-            {null && isError && <div>ERRORE</div>}
+            {showIcons && tickChecked && createPizzaIcons({ ingredientName, handleChangeIcon, radioChecked, isError })}
         </div>
     );
 };
@@ -548,11 +545,11 @@ function createIngredientsGroup({
  * @param {Array} of Function handlers
  * @returns {Array} of Array
  **/
-function groupByInitials(ingredients) {
+function groupByInitials(ingredientsName) {
     const ret = [];
 
     // transform every word to lowercase
-    const lowerCasedIngredients = ingredients.map((i) => i.toLowerCase());
+    const lowerCasedIngredients = ingredientsName.map((i) => i.toLowerCase());
     // sort the array
     lowerCasedIngredients.sort();
 

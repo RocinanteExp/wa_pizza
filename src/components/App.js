@@ -2,8 +2,9 @@ import "../styles/App.css";
 import { useState, useEffect, StrictMode } from "react";
 import { OrderForm } from "./OrderForm";
 import { OrderPreview } from "./OrderPreview";
-import constants from "../utils/constants";
+import sys from "../utils/constants";
 import utils from "../utils/utils";
+import print from "../utils/printer";
 
 //const MAX_NUM_PIZZA = { Small: 10, Medium: 5, Large: 10 };
 
@@ -29,8 +30,8 @@ const Header = () => {
 };
 
 const templateForm = {
-    sizes: Object.values(constants.PIZZA_SIZES),
-    ingredients: Object.values(constants.PIZZA_INGREDIENTS),
+    sizes: Object.values(sys.PIZZA_SIZES),
+    ingredientsName: Object.values(sys.PIZZA_INGREDIENTS),
     requests: undefined,
     quantity: 1,
 };
@@ -41,13 +42,38 @@ const templateForm = {
  **/
 const MainContent = () => {
     const [orders, setOrders] = useState([]);
+    const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ ...sys.PIZZA_MAX_QUANTITIES });
 
-    const handleOrderSubmit = (order) => {
-        console.group("Submitting order (MainContent)");
-        console.log(order);
-        console.groupEnd();
+    const opcode = {
+        MINUS: 0,
+        PLUS: 1,
+    };
+
+    const opOnMaxQuantityPerPizza = (side, op, quantity) => {
+        switch (op) {
+            case opcode.MINUS: {
+                return { [side]: maxQuantityPerPizza[side] - quantity };
+            }
+            case opcode.PLUS: {
+                return { [side]: maxQuantityPerPizza[side] + quantity };
+            }
+            default:
+                break;
+        }
+    };
+
+    const handleSubmitOrders = (order) => {
+        print.grp("Submitting order (MainContent)");
+        print.out(order);
+        print.grpend();
 
         setOrders([...orders, order]);
+        handleChangeMaxQuantityPerPizza(opOnMaxQuantityPerPizza(order.size, opcode.MINUS, order.quantity));
+    };
+
+    const handleChangeMaxQuantityPerPizza = (value) => {
+        console.log("IPDAE", value);
+        setMaxQuantityPerPizza((maxQuantityPerPizza) => ({ ...maxQuantityPerPizza, ...value }));
     };
 
     const handleOrderRemove = (indexOrder) => {
@@ -56,14 +82,19 @@ const MainContent = () => {
     };
 
     useEffect(() => {
-        console.group("Current orders (MainContent)");
-        console.log(orders);
-        console.groupEnd();
+        print.grp("Current orders (MainContent)");
+        print.tb(orders);
+        print.out(maxQuantityPerPizza);
+        print.grpend();
     });
 
     return (
         <main className="container-flex flex-main-center main-content">
-            <OrderForm templateForm={templateForm} handleOrderSubmit={handleOrderSubmit} />
+            <OrderForm
+                sizes={templateForm.sizes}
+                maxQuantityPerPizza={maxQuantityPerPizza}
+                handles={{ onSubmit: handleSubmitOrders }}
+            />
             <OrderPreview orders={orders} handleOrderRemove={handleOrderRemove} />
         </main>
     );
