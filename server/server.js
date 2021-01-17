@@ -3,9 +3,10 @@
 const express = require("express");
 const morgan = require("morgan");
 const print = require("./utils/printer");
-const { router: customerRouter } = require("./Routers/customerRouter");
+const dao = require("./db/dao");
+const { router: customerRouter } = require("./routers/customerRouter");
+const { router: generalRouter } = require("./routers/generalRouter");
 
-//const db = require("./db/Dao");
 //const JWT_SECRET = "1234567890";
 
 const app = express();
@@ -50,6 +51,7 @@ app.use(morgan(":method".blue + " :url :host code: :status :res[content-length] 
 //    }
 //});
 
+app.use(`${BASE_ROUTE}/`, generalRouter);
 app.use(`${BASE_ROUTE}/customers`, customerRouter);
 
 // every other routes get handled by this handler
@@ -85,11 +87,12 @@ function printConf() {
 // "Main"
 (async () => {
     try {
-        console.info("Initializing the system");
+        print.info("Initializing the system");
 
+        dao.open();
         app.listen(PORT, printConf);
     } catch (err) {
-        console.info(err, "FAILED initializing the system".red);
+        print.err(err, "FAILED initializing the system".red);
         return process.exit(-1);
     }
 })();

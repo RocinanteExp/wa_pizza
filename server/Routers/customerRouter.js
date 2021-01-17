@@ -1,6 +1,7 @@
 "use strict";
 
 const router = require("express").Router();
+const dao = require("../db/dao");
 const print = require("../utils/printer");
 const assert = require("assert");
 
@@ -21,11 +22,30 @@ function validateOrder(obj) {
         assert(integerFields.every((field) => typeof elem[field] === "number"));
     }
 
-    print.out(obj);
+    for (const elem of obj) {
+        for(const ingredient of elem.ingredients) {
+            assert(ingredient.side !== undefined);
+        }
+    }
 }
 
-function addOrder(req, res) {
-    const error = validateOrder(req.body);
+async function addOrder(req, res) {
+    const order = req.body;
+    
+    const error = validateOrder(order);
+    if(error) {
+        print.error(error);
+        return;
+    }
+
+    try {
+        await dao.saveOrder(order);
+        return;
+    } catch(err) {
+        print.err(err);
+        return;
+    }
+
     res.end();
 }
 module.exports = { router };

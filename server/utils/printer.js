@@ -7,8 +7,13 @@ print.grp = (label) => {
     console.group(label);
 };
 
-print.info = (msg) => {
-    console.log("INFO: ".green + msg);
+print.info = (...msg) => {
+    console.log("INFO: ".green);
+    console.log(msg);
+};
+
+print.err = (msg) => {
+    console.error("ERROR: ".red, msg);
 };
 
 print.grpend = () => {
@@ -23,9 +28,5 @@ print.tb = (array) => {
     console.table(array);
 };
 
-print.err = (message) => {
-    console.error("ERRORE");
-    console.error(...message);
-};
 
 module.exports = print;
