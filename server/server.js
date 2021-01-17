@@ -22,7 +22,7 @@ morgan.token("host", function (req) {
 app.use(morgan(":method".blue + " :url :host code: :status :res[content-length] - :response-time ms"));
 
 // GENERAL ROUTER (NO LOGIN NEEDED)
-app.use(`${BASE_ROUTE}`, () => console.log("general handler stub"));
+//app.use(`${BASE_ROUTE}`, () => console.log("general handler stub"));
 
 //app.use(
 //    jwt({
