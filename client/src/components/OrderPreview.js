@@ -1,31 +1,31 @@
-import sys from "../utils/constants";
+//import sys from "../utils/constants";
 import { Container, ContainerFlex } from "./Container";
 import { Button } from "./Button";
 
 let keyCounter = 0;
 
-const createQuantitySelect = (maxQuantity, defaultQuantity, callback) => {
-    const optionTags = [];
-    optionTags.push(<option value="Rimuovi">Rimuovi</option>);
-    for (let i = 1; i <= maxQuantity; i++) {
-        optionTags.push(
-            <option value={i} selected={defaultQuantity === i ? "selected" : ""}>
-                {i}
-            </option>
-        );
-    }
-
-    return (
-        <select
-            onChange={(event) => {
-                if (event.target.value === "Rimuovi") callback();
-            }}
-            class="select"
-        >
-            {optionTags}
-        </select>
-    );
-};
+//const createQuantitySelect = (maxQuantity, defaultQuantity, callback) => {
+//    const optionTags = [];
+//    optionTags.push(<option value="Rimuovi">Rimuovi</option>);
+//    for (let i = 1; i <= maxQuantity; i++) {
+//        optionTags.push(
+//            <option value={i} selected={defaultQuantity === i ? "selected" : ""}>
+//                {i}
+//            </option>
+//        );
+//    }
+//
+//    return (
+//        <select
+//            onChange={(event) => {
+//                if (event.target.value === "Rimuovi") callback();
+//            }}
+//            class="select"
+//        >
+//            {optionTags}
+//        </select>
+//    );
+//};
 
 const createOrderBullet = (pizzaOrder, callback) => {
     const key = `key-li-${keyCounter++}`;
@@ -103,6 +103,11 @@ const OrderPreview = ({ orders, handles }) => {
     const totQuantity = totalNumPizza(orders);
     const discount = computeDiscount(orders);
 
+    const handleOrderSubmit = () => {
+        console.log(orders);
+        console.log(JSON.stringify(orders));
+    };
+
     return (
         <Container id="id-order-preview" title="Il tuo Ordine">
             <OrdersList orders={orders} handleOrderRemove={handles.onRemove} />
@@ -124,7 +129,9 @@ const OrderPreview = ({ orders, handles }) => {
                     <span>{`${subTotal + extras - discount} €`}</span>
                 </ContainerFlex>
             </ContainerFlex>
-            <Button color="dark">Ordina Adesso</Button>
+            <Button color="dark" handles={{ onClick: handleOrderSubmit }}>
+                Ordina Adesso
+            </Button>
         </Container>
     );
 };

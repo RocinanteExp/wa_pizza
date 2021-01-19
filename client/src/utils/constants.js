@@ -37,6 +37,9 @@ Object.freeze(PIZZA_MAX_INGREDIENTS);
 Object.freeze(PIZZA_SIDES);
 Object.freeze(PIZZA_PRICES);
 
+const TABLE_ROW_ORDER_ITEM_MAPPINGS = ["quantity", "size", "ingredients", "subtotal", "extra", "discount", "total"];
+const TABLE_ORDER_HEADER = ["quantità", "dimensione", "ingredienti", "subtotale", "extra", "sconto", "totale"];
+
 const constants = {
     PIZZA_INGREDIENTS,
     PIZZA_MAX_QUANTITIES,
@@ -44,5 +47,9 @@ const constants = {
     PIZZA_SIZES,
     PIZZA_SIDES,
     PIZZA_PRICES,
+    TABLE_ORDER_HEADER,
+    TABLE_ROW_ORDER_ITEM_MAPPINGS
 };
+
+
 export default constants;

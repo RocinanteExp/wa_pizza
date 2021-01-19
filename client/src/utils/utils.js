@@ -94,6 +94,12 @@ function indexOfObj(array, property, targetValue) {
     return -1;
 }
 
+function copyExistingProps(to, from) {
+    Object.keys(from)
+        .filter((key) => key in to)
+        .forEach((key) => (to[key] = from[key]));
+}
+
 const exportsObj = {
     removeItemFromArray,
     addItemToArray,
@@ -103,6 +109,7 @@ const exportsObj = {
     findObj,
     removeObjFromArrayInPlace,
     indexOfObj,
+    copyExistingProps,
 };
 
 export default exportsObj;

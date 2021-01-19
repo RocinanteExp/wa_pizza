@@ -2,6 +2,7 @@ import "../styles/Button.css";
 
 const colorMap = {
     dark: "btn-dark",
+    green: "btn-green",
 };
 
 const statusMap = {

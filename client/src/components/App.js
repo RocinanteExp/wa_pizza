@@ -1,21 +1,30 @@
 import "../styles/App.css";
-import { useState, useEffect, StrictMode } from "react";
+import { useState, useEffect, StrictMode, createContext, useContext } from "react";
 import { OrderForm } from "./OrderForm";
+import { Container } from "./Container";
+import { OrdersHistory } from "./OrdersHistory";
+import Login from "./Login";
 import { OrderPreview } from "./OrderPreview";
 import sys from "../utils/constants";
 import utils from "../utils/utils";
 import Order from "../entities/Order";
 import print from "../utils/printer";
+import generalApi from "../api/generalApi";
+import { BrowserRouter as Router, Switch, Route, Link, Redirect } from "react-router-dom";
 
-//const MAX_NUM_PIZZA = { Small: 10, Medium: 5, Large: 10 };
+const UserContext = createContext(null);
 
 const MainNavbar = () => {
+    const user = useContext(UserContext);
+
     return (
         <nav className="main-nav">
             <ul>
-                <li>Login</li>
-                <li>Ordina</li>
-                <li>I miei ordini</li>
+                <li>{user ? `${user.name}` : <Link to="/login">Login</Link>}</li>
+                <li>
+                    <Link to="/order">Ordina</Link>
+                </li>
+                <li>{user ? <Link to="/history">I miei ordini</Link> : null} </li>
             </ul>
         </nav>
     );
@@ -49,7 +58,8 @@ const debugOrders = [
             { name: "Bacon", side: "both" },
             { name: "Verdure", side: "both" },
         ],
-        4, sys.PIZZA_PRICES["MEDIUM"]
+        4,
+        sys.PIZZA_PRICES["MEDIUM"]
     ),
     new Order(
         "large",
@@ -58,7 +68,8 @@ const debugOrders = [
             { name: "Verdure", side: "right" },
             { name: "Frutti di mare", side: "both" },
         ],
-        4, sys.PIZZA_PRICES["LARGE"]
+        4,
+        sys.PIZZA_PRICES["LARGE"]
     ),
 ];
 
@@ -84,7 +95,7 @@ const debugOrders = [
 //    },
 //];
 
-const MainContent = () => {
+const OrderBuilder = () => {
     const [orders, setOrders] = useState(debugOrders);
     const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ ...sys.PIZZA_MAX_QUANTITIES });
 
@@ -107,7 +118,7 @@ const MainContent = () => {
     };
 
     const handleSubmitOrders = (order) => {
-        print.grp("Submitting order (MainContent)");
+        print.grp("Submitting order (OrderBuilder)");
         print.out(order);
         print.grpend();
 
@@ -125,7 +136,7 @@ const MainContent = () => {
     };
 
     useEffect(() => {
-        print.grp("Current orders (MainContent)");
+        print.grp("Current orders (OrderBuilder)");
         print.tb(orders);
         print.out(maxQuantityPerPizza);
         print.grpend();
@@ -144,11 +155,30 @@ const MainContent = () => {
 };
 
 const App = () => {
+    const [user, setUser] = useState(null);
+
     return (
         <StrictMode>
-            <div className="container">
-                <Header />
-                <MainContent />
+            <div>
+                <UserContext.Provider value={user}>
+                    <Router>
+                        <Header />
+                        <Switch>
+                            <Route path="/login">
+                                <Login handles={{ onLogin: generalApi.userLogin }} />
+                            </Route>
+                            <Route path="/order">
+                                <OrderBuilder />
+                            </Route>
+                            <Route path="/history">
+                                <OrdersHistory />
+                            </Route>
+                            <Route path="/">
+                                <Redirect to={`/${user ? "history" : "login"}`} />
+                            </Route>
+                        </Switch>
+                    </Router>
+                </UserContext.Provider>
             </div>
         </StrictMode>
     );

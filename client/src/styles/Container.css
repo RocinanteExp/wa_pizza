@@ -1,5 +1,6 @@
 .container {
     position: relative;
+    padding: 1rem 1.5rem;
 }
 
 .container-flex {
@@ -22,3 +23,21 @@
 .flex-ca-center {
     align-items: center;
 }
+/*
+.flex-main-center {
+    justify-content: center;
+}
+
+.flex-main-sb {
+    justify-content: space-between;
+}
+
+.flex-cross-center {
+    align-items: center;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+*/

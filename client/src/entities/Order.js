@@ -8,8 +8,8 @@ class Order {
         this.requests = requests;
         this.price = price || 0;
 
-        this.extra = this.computeExtra();
         this.discount = this.computeDiscount();
+        this.extra = this.computeExtra();
 
         this.id = id;
     }
@@ -18,19 +18,32 @@ class Order {
         return this.price * this.quantity;
     }
 
+    get subtotal() {
+        return this.price * this.quantity;
+    }
+
     getSubTotalWithExtras() {
-        return this.price * this.quantity * (1 + this.extra/100);
+        return this.getSubTotal() + this.extra;
+    }
+
+    get subTotalWithExtras() {
+        return this.getSubTotal() + this.extra;
     }
 
     getTotal() {
-        return this.price * this.quantity * (1 - this.discount + this.extra);
+        return (this.getSubTotalWithExtras() * (100 - this.discount)) / 100;
+    }
+
+    get total() {
+        return (this.getSubTotalWithExtras() * (100 - this.discount)) / 100;
     }
 
     computeExtra() {
         if (this.size === sys.PIZZA_SIZES.LARGE) {
             const doAdd = this.ingredients.some((i) => i.name.toLowerCase() === "frutti di mare");
-            if (doAdd) return 20;
+            if (doAdd) return this.getSubTotal() * 0.2;
         }
+
         return 0;
     }
 
@@ -40,6 +53,13 @@ class Order {
         }
 
         return 0;
+    }
+
+    toString() {
+        return (
+            `${this.quantity} x pizza ${this.size} ingredients ${this.ingredients.join(" ")} price => ${this.price}` +
+            ` subTotal => ${this.getSubTotal()} total => ${this.getTotal()}`
+        );
     }
 }
 
