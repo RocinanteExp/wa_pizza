@@ -4,19 +4,26 @@ const router = require("express").Router();
 const dao = require("../db/dao");
 const print = require("../utils/printer");
 const assert = require("assert");
+const jsonwebtoken = require("jsonwebtoken");
+const conf = require("../utils/conf");
 
-router.get("/login", handleUserLogin);
+router.post("/login", handleUserLogin);
 router.post("/logout", handleUserLogout);
 
-function handleUserLogin(req, res) {
-    print.info("sono login");
-    res.end();
+async function handleUserLogin(req, res) {
+    const { email, password } = req.body;
+
+    console.log(req.cookies);
+
+    const user = await dao.getUserByEmail(email);
+    const jwt = jsonwebtoken.sign({ userId: user.id, iat: Date.now() }, conf.JWT_SECRET, { expiresIn: "1h" });
+
+    res.cookie("jwt", jwt, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+    res.status(200).json(user).end();
 }
 
 function handleUserLogout(req, res) {
-    print.info("sono login");
-    res.end();
+    res.clearCookie("jwt").end();
 }
-
 
 module.exports = { router };

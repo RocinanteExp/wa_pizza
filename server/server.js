@@ -6,6 +6,7 @@ const print = require("./utils/printer");
 const dao = require("./db/dao");
 const { router: customerRouter } = require("./routers/customerRouter");
 const { router: generalRouter } = require("./routers/generalRouter");
+const cookieParser = require("cookie-parser");
 
 //const JWT_SECRET = "1234567890";
 
@@ -15,7 +16,7 @@ const BASE_ROUTE = "/api/v1";
 const PORT = 3001;
 
 app.use(express.json());
-//app.use(cookieParser());
+app.use(cookieParser());
 
 morgan.token("host", function (req) {
     return "src: " + req.hostname;

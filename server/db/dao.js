@@ -6,7 +6,7 @@ const DEFAULT_DB_PATH = path.join(__dirname, "db.db");
 
 // glbal single access to the db
 let db = null;
-let counter = 1;
+let globalCounterOrderId = 1;
 
 /**
  * open a connection with the database.
@@ -23,6 +23,11 @@ const open = (dbpath = DEFAULT_DB_PATH) => {
         db = new sqlite.Database(dbpath, (err) => {
             if (err) rej(err);
             else res();
+        });
+
+        db.on("profile", (query, time) => {
+            query = query.replace(/ +(?= )/g, "");
+            console.log("QUERY EXECUTED => ", query);
         });
     });
 };
@@ -43,33 +48,67 @@ const close = () => {
     });
 };
 
+const normalizeValue = (value) => {
+    switch (typeof value) {
+        case "number":
+            return value;
+        case "string":
+            return `"${value}"`;
+        case "undefined":
+            return null;
+        case "object":
+        default:
+            print.err("normalizeValue default case");
+    }
+};
+
 /**
  * creates a insert query given an order
  * @param {Order} a order
  * @param {User} the requesting user
  * @param {String}
  */
-const createQueryAddOrder = (order) => {
-    const fields = Object.keys(order);
+//TODO extra should contain a flat number
+const generateAddOrderQuery = (order) => {
+    const queries = [];
+    for (orderItem of order) {
+        const fields = Object.keys(orderItem);
 
-    let ingredientTuples = [];
+        let ingredientTuples = [];
 
-    const values = [];
-    for (const keys of Object.keys(order)) {
-        if (keys !== "ingredients") {
-            values.push(`"${order[keys]}"`);
-        } else {
-            for (const ingredient of order.ingredients) {
-                ingredient.name = ingredient.name.toLowerCase();
-                ingredientTuples.push(`(${Object.values(ingredient).join(", ")})`);
+        const values = [];
+        for (const property of Object.keys(orderItem)) {
+            if (property !== "ingredients") {
+                values.push(normalizeValue(orderItem[property]));
+            } else {
+                for (const ingredient of orderItem.ingredients) {
+                    ingredient.name = ingredient.name.toLowerCase();
+                    ingredientTuples.push(`(${Object.values(ingredient).join(", ")})`);
+                }
+
+                values.push(`"${ingredientTuples}"`);
             }
-
-            values.push(`"${ingredientTuples}"`);
         }
+
+        const sql = `INSERT INTO Orders(${fields.join(", ")}, orderId) VALUES(${values.join(
+            ", "
+        )}, ${globalCounterOrderId})`;
+
+        queries.push(sql);
     }
 
-    const sql = `INSERT INTO Orders(${fields.join(",")}, idorder) VALUES(${values.join(", ")}, ${counter++})`;
-    return sql;
+    globalCounterOrderId++;
+
+    return queries;
+};
+
+const promisifyQueryRun = (query) => {
+    return new Promise((res, rej) => {
+        db.run(query, (error) => {
+            if (error) rej(error);
+            else res();
+        });
+    });
 };
 
 /**
@@ -78,19 +117,27 @@ const createQueryAddOrder = (order) => {
  * @param {User} the requesting user
  * @param {Promise} resolved if everything went well, rejected otherwise
  */
-const saveOrder = (order) => {
-    const sqlQuery = createQueryAddOrder(order[0]);
-    return new Promise((res, rej) => {
-        console.log("executing", sqlQuery);
-        db.run(sqlQuery, (err) => {
-            if (err) {
-                rej(err);
-                return;
-            }
+const saveOrder = (order, userId, callback) => {
+    const sqlQueries = generateAddOrderQuery(order);
 
-            res();
-        });
+    db.serialize(async () => {
+        db.run("BEGIN TRANSACTION;");
+
+        try {
+            await Promise.all(sqlQueries.map((query) => promisifyQueryRun(query)));
+
+            db.run("COMMIT;", (err) => {
+                if (err) throw err;
+            });
+        } catch (err) {
+            console.error("catch saveOrder1 =>", err);
+            db.run("ROLLBACK TRANSACTION;", (err) => {
+                if (err) console.error("catch saveOrder2 =>", err);
+            });
+        }
     });
+
+    console.log("exiting saveOrder");
 };
 
 /**
@@ -98,7 +145,7 @@ const saveOrder = (order) => {
  * @param {String} email
  * @param {Promise} User. An Error on error
  */
-const findUserByEmail = (email) => {
+const getUserByEmail = (email) => {
     return new Promise((res, rej) => {
         const sql = "SELECT * FROM Users WHERE email = ?";
         db.get(sql, [email], (err, row) => {
@@ -112,4 +159,24 @@ const findUserByEmail = (email) => {
     });
 };
 
-module.exports = { open, close, saveOrder, findUserByEmail, createQueryAddOrder };
+/**
+ * get all orders given an User
+ * @param {Integer} userId
+ * @param {Promise} orders. An Error on error
+ */
+const getOrdersByUserId = (userId) => {
+    return new Promise((res, rej) => {
+        const sql = "SELECT * FROM Orders WHERE userId IS ?";
+
+        db.all(sql, [userId], (err, rows) => {
+            if (err) {
+                rej(err);
+                return;
+            }
+
+            res(rows);
+        });
+    });
+};
+
+module.exports = { open, close, saveOrder, getUserByEmail, generateAddOrderQuery, getOrdersByUserId };
