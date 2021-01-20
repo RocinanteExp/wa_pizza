@@ -1,6 +1,6 @@
 import { ContainerFlex, Container } from "./Container";
 import generalApi from "../api/generalApi";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -46,6 +46,7 @@ const Login = ({ handles }) => {
             try {
                 const ret = await generalApi.userLogin(email, password);
                 if (typeof ret === "object") {
+                    console.log("USER FOUND", ret);
                     handles.onLogin(ret);
                     return;
                 }
@@ -68,8 +69,6 @@ const Login = ({ handles }) => {
             formEl.current.reportValidity();
         }
     };
-
-    useEffect(() => {}, []);
 
     return (
         <>
@@ -107,7 +106,7 @@ const Login = ({ handles }) => {
                             className="form-btn-submit"
                             disabled={isWaiting}
                             color="primary"
-                            onClick={() => console.log("clicking button")}
+                            handles={{ onClick: () => console.log("button login pressed") }}
                         >
                             {isWaiting ? "Waiting..." : "Sign up"}
                         </Button>

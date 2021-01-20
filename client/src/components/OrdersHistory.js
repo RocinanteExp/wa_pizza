@@ -9,7 +9,7 @@ import api from "../api/customerApi";
 import sys from "../utils/constants";
 import OrderItem from "../entities/OrderItem";
 
-const AccordionOrder = (order) => {
+const AccordionOrder = ({ order }) => {
     const key = `key-accordion-order-${order[0].orderId}`;
 
     const rows = order.map((item) => parseJsonOrder(item));
@@ -38,38 +38,40 @@ const AccordionOrder = (order) => {
 };
 
 function generateSummaries(o) {
-    console.log("sono generateSummaries");
     const orders = groupByOrderId(o);
-    const summaries = orders.map(AccordionOrder);
+    const summaries = orders.map((order, index) => <AccordionOrder order={order} key={`key-order-${index}`} />);
     return summaries;
 }
 
 const OrdersHistory = () => {
     const user = useContext(UserContext);
     const [pastOrders, setPastOrders] = useState([]);
-    const [isWaiting, setIsWaiting] = useState(false);
     const [message, setMessage] = useState("");
     const [typeMessage, setTypeMessage] = useState("");
 
     useEffect(() => {
+        if (!user) {
+            setTypeMessage("info");
+            setMessage(Error.getMessage(errno.USER_LOGIN_REQUIRED));
+            return;
+        }
+
         let isMounted = true;
 
         async function fetchOrders() {
             try {
-                if (user) {
-                    setIsWaiting(true);
-                    const orders = await api.getCustomerOrdersHistory(user.id);
+                const orders = await api.getCustomerOrdersHistory(user.id);
 
-                    if (isMounted) setPastOrders(orders);
-                } else {
-                    setTypeMessage("info");
-                    setMessage(Error.getMessage(errno.USER_LOGIN_REQUIRED));
+                if (isMounted) {
+                    if (orders.length === 0) {
+                        setTypeMessage("info");
+                        setMessage("Non hai effettuato alcun ordine");
+                    }
+                    setPastOrders(orders);
                 }
             } catch (err) {
                 setTypeMessage("error");
                 setMessage(Error.getMessage(errno.SERVER_FAILED_CONNECTION));
-            } finally {
-                setIsWaiting(false);
             }
         }
 
@@ -80,8 +82,8 @@ const OrdersHistory = () => {
 
     return (
         <>
-            {pastOrders.length === 0 || !user ? (
-                <Dialog type={typeMessage} message={message} handles={{onClick: ()=>setMessage("")}} />
+            {message ? (
+                <Dialog type={typeMessage} message={message} handles={{ onClick: () => setMessage("") }} />
             ) : (
                 <ContainerFlex dir="column">{generateSummaries(pastOrders)}</ContainerFlex>
             )}
@@ -138,6 +140,8 @@ function parseJsonOrder(jsonOrder) {
         jsonOrder.quantity,
         jsonOrder.price,
         jsonOrder.requests,
+        jsonOrder.discount,
+        jsonOrder.itemId,
         jsonOrder.orderId
     );
 }

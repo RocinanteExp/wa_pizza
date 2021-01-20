@@ -16,7 +16,6 @@ async function getCustomerOrdersHistory(customerId) {
         } else {
             throw response.status;
         }
-
     } catch (err) {
         throw new Error(err);
     }
@@ -31,7 +30,11 @@ async function sendOrder(customerId, order) {
         body: JSON.stringify(order),
     });
 
-    return response.status;
+    if (response.ok) {
+        return response.status;
+    } else {
+        throw response.status;
+    }
 }
 
 const api = { getCustomerOrdersHistory, sendOrder };

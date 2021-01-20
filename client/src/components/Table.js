@@ -4,8 +4,8 @@ import "../styles/Table.css";
 const TableRow = ({ values, children }) => {
     return (
         <tr>
-            {values.map((value) => (
-                <td key={`key-table-row-${value}`}>{value}</td>
+            {values.map((value, index) => (
+                <td key={`key-table-row-td-${index}-${value}`}>{value}</td>
             ))}
             {children}
         </tr>
@@ -25,15 +25,13 @@ const TableHeader = ({ names = [], children }) => {
     );
 };
 
-// TODO the key in TableRow may not be unique
 const Table = ({ header, rows, className }) => {
-    console.log("SONO TABELLA", rows);
     return (
         <table className={className}>
             <TableHeader names={header} />
             <tbody>
                 {rows.map((row) => (
-                    <TableRow key={row.join("")} values={row} />
+                    <TableRow key={`key-table-${row.join("")}`} values={row} />
                 ))}
             </tbody>
         </table>
@@ -56,7 +54,7 @@ const beautifyOrderItemValue = (value, prop) => {
             }
             return ret;
         case "string":
-            return utils.capitalize(value);
+            return utils.capitalize(value.split("-").join(" "));
         case "undefined":
             return null;
         case "object": {
@@ -71,8 +69,8 @@ const beautifyOrderItemValue = (value, prop) => {
 
                 return <ul>{ingredientTuples}</ul>;
             }
+            break;
         }
-
         default:
             console.error("normalizeValue default case");
     }
@@ -83,6 +81,9 @@ const beautifyOrderItemValue = (value, prop) => {
  *@param {Array} props.header is an array of string
  */
 const TableOrder = (props) => {
+    // here we trasform each elem from props.rows to the final visual format
+    // each elem of rowsString is an Array where the i-th elem is the
+    // the value displayed in the i-th column of the table
     const rowsString = props.rows.map((row) => {
         return props.mapping.map((name) => beautifyOrderItemValue(row[name], name));
     });
@@ -90,7 +91,7 @@ const TableOrder = (props) => {
     const className = "table-order";
     const newProps = { ...props, rows: rowsString, className };
 
-    return <Table {...newProps} />;
+    return <Table key={`key-table-order-${rowsString[0].join(" ")}`} {...newProps} />;
 };
 
 export { Table, TableOrder };

@@ -84,22 +84,13 @@ const PizzaRequests = ({ checked, handles }) => {
     );
 };
 
-const PizzaQuantity = ({ handles, size, max = 0 }) => {
-    const [currQuantity, setCurrQuantity] = useState(max);
-
+const PizzaQuantity = ({ handles, max = 0 }) => {
     const currComponentId = "id-container-pizza-quantity";
     const currComponentTitle = "Quantità";
 
     const handleChangeCurrQuantity = (quantity) => {
-        setCurrQuantity(quantity);
         handles.onChange(quantity);
     };
-
-    useEffect(() => {
-        print.grp("PizzaQuantity");
-        print.out(currQuantity);
-        print.grpend();
-    });
 
     return (
         <Container id={currComponentId} title={currComponentTitle} margin="bottom">
@@ -232,7 +223,7 @@ const OrderForm = ({ maxQuantityPerPizza, handles }) => {
                 maxPerPizza={maxQuantityPerPizza}
             />
             <PizzaIngredientsMenu
-                handles={{ onChange: handleChangePizzaIngredients, onMessage:handles.onMessage}}
+                handles={{ onChange: handleChangePizzaIngredients, onMessage: handles.onMessage }}
                 names={ingredientsName}
                 size={pizzaSize}
                 maxPerSize={sys.PIZZA_MAX_INGREDIENTS[pizzaSize]}

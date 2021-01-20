@@ -4,6 +4,7 @@ import { useState, createContext, useContext, useEffect } from "react";
 import { OrdersHistory } from "./OrdersHistory";
 import OrderBuilder from "./OrderBuilder";
 import Login from "./Login";
+import Logout from "./Logout";
 import { BrowserRouter as Router, Switch, Route, Link, Redirect } from "react-router-dom";
 
 const UserContext = createContext(null);
@@ -11,11 +12,6 @@ const UserContext = createContext(null);
 const Navbar = () => {
     const user = useContext(UserContext);
 
-    //{user ? (
-    //    <li className="navbar-list-item">
-    //        <Link to="/history">I miei ordini</Link>
-    //    </li>
-    //) : null}
     return (
         <nav className="navbar">
             <ul className="container-flex">
@@ -25,13 +21,15 @@ const Navbar = () => {
                 <li className="navbar-list-item">
                     <Link to="/order">Ordina</Link>
                 </li>
-                <li className="navbar-list-item">
-                    <Link to="/history">I miei ordini</Link>
-                </li>
                 {user ? (
-                    <li className="navbar-list-item">
-                        <Link to="/logout">Logout</Link>
-                    </li>
+                    <>
+                        <li className="navbar-list-item">
+                            <Link to="/history">I miei ordini</Link>
+                        </li>
+                        <li className="navbar-list-item">
+                            <Link to="/logout">Logout</Link>
+                        </li>
+                    </>
                 ) : null}
             </ul>
         </nav>
@@ -58,6 +56,9 @@ const App = () => {
                             ) : (
                                 <Login handles={{ onLogin: (user) => setUser(user) }} />
                             )}
+                        </Route>
+                        <Route path="/logout">
+                            {user ? <Logout handles={{ onLogout: () => setUser(null) }} /> : <Redirect to={"/login"} />}
                         </Route>
                         <Route path="/order">
                             <OrderBuilder />

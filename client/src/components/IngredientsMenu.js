@@ -247,9 +247,9 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
 
             if (deletedIngredients.length > 0) {
                 const deletedIngredient = deletedIngredients[0];
-                print.grp("!isChecked");
-                print.out("removing ingredient", deletedIngredient);
-                print.grpend();
+                //print.grp("!isChecked");
+                //print.out("removing ingredient", deletedIngredient);
+                //print.grpend();
 
                 setSelectedItems(copySelectedItems);
 
@@ -283,9 +283,9 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
 
         // target ingredient
         const newIngredient = { name: utils.capitalize(ingredientFields[1]), side: ingredientFields[0] };
-        print.grp("handleChangeIcon");
-        print.out(newIngredient);
-        print.grpend();
+        //print.grp("handleChangeIcon");
+        //print.out(newIngredient);
+        //print.grpend();
 
         // remove item from selectedItems
         const foundIngredient = utils.findObj(selectedItems, "name", newIngredient.name);
@@ -293,11 +293,11 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
 
         const oldIngredient = { ...foundIngredient };
 
-        print.grp("isAPossibleChoiceRadio");
+        //print.grp("isAPossibleChoiceRadio");
         // check if the chosen pizza's side selection is available
         if (!isAPossibleChoiceRadio(oldIngredient.side, newIngredient.side)) {
-            print.out("failed oldside:", oldIngredient.side, " => newside:", newIngredient.side);
-            print.grpend();
+            //print.out("failed oldside:", oldIngredient.side, " => newside:", newIngredient.side);
+            //print.grpend();
 
             let maxIngredients = `${limits["left"]} sx`;
             maxIngredients += `, ${limits["right"]} dx`;
@@ -311,8 +311,8 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
             return;
         }
 
-        print.out("switched oldside:", oldIngredient.side, "=> newside:", newIngredient.side);
-        print.grpend();
+        //print.out("switched oldside:", oldIngredient.side, "=> newside:", newIngredient.side);
+        //print.grpend();
 
         // update the numSelected items
         const doesHaveSide = oldIngredient.side ? true : false;

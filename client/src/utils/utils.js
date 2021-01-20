@@ -1,5 +1,4 @@
 import { factoryError, errno } from "../utils/error";
-import constants from "../utils/constants";
 
 function removeItemFromArray(array, index) {
     const ret = array.slice(0, index);

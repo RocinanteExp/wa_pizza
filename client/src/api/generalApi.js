@@ -12,27 +12,24 @@ async function userLogin(email, password) {
     if (response.ok) {
         const user = await response.json();
         return user;
-    } 
+    }
 
     return response.status;
 }
 
-async function userLogout(email, password) {
-    const response = await fetch(BASE_URL + "/login", {
+async function userLogout() {
+    const response = await fetch(BASE_URL + "/logout", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
     });
 
     if (response.ok) {
-        const user = await response.json();
-        console.log(user);
-        return Promise.resolve(user);
+        return true;
     }
 
-    return Promise.reject();
+    throw new Error();
 }
 
 async function getPizzaAvailabilities() {

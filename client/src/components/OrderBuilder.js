@@ -5,34 +5,34 @@ import { ContainerFlex } from "./Container";
 import { Dialog } from "./Dialog";
 import { UserContext } from "./App";
 import { Error, errno } from "../utils/error";
-import sys from "../utils/constants";
 import utils from "../utils/utils";
-import OrderItem from "../entities/OrderItem";
 import print from "../utils/printer";
 import customerApi from "../api/customerApi";
 import generalApi from "../api/generalApi";
 
-const debugOrders = [
-    new OrderItem(
-        "medium",
-        [
-            { name: "Bacon", side: "both" },
-            { name: "Verdure", side: "both" },
-        ],
-        4,
-        sys.PIZZA_PRICES["MEDIUM"]
-    ),
-    new OrderItem(
-        "large",
-        [
-            { name: "Bacon", side: "left" },
-            { name: "Verdure", side: "right" },
-            { name: "Frutti di mare", side: "both" },
-        ],
-        4,
-        sys.PIZZA_PRICES["LARGE"]
-    ),
-];
+//import sys from "../utils/constants";
+//import OrderItem from "../entities/OrderItem";
+//const debugOrders = [
+//    new OrderItem(
+//        "medium",
+//        [
+//            { name: "Bacon", side: "both" },
+//            { name: "Verdure", side: "both" },
+//        ],
+//        4,
+//        sys.PIZZA_PRICES["MEDIUM"]
+//    ),
+//    new OrderItem(
+//        "large",
+//        [
+//            { name: "Bacon", side: "left" },
+//            { name: "Verdure", side: "right" },
+//            { name: "Frutti di mare", side: "both" },
+//        ],
+//        4,
+//        sys.PIZZA_PRICES["LARGE"]
+//    ),
+//];
 
 /**
  * All the current order's items shown on the OrderPreview are stored in the state "orderItems".

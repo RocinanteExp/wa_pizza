@@ -1,7 +1,7 @@
 import sys from "../utils/constants";
 
 class OrderItem {
-    constructor(size, ingredients, quantity, price, requests, discount, id) {
+    constructor(size, ingredients, quantity, price, requests, discount, id, orderId) {
         this.size = size;
         this.ingredients = ingredients;
         this.quantity = quantity;
@@ -12,6 +12,7 @@ class OrderItem {
         this.extra = this.computeExtra();
 
         this.id = id;
+        this.orderId = orderId;
     }
 
     get subtotal() {
