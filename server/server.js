@@ -8,8 +8,6 @@ const { router: customerRouter } = require("./routers/customerRouter");
 const { router: generalRouter } = require("./routers/generalRouter");
 const cookieParser = require("cookie-parser");
 
-//const JWT_SECRET = "1234567890";
-
 const app = express();
 
 const BASE_ROUTE = "/api/v1";

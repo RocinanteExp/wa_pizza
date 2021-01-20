@@ -9,21 +9,40 @@ const conf = require("../utils/conf");
 
 router.post("/login", handleUserLogin);
 router.post("/logout", handleUserLogout);
+router.get("/pizzas/availabilities", getPizzaAvailabilities);
 
 async function handleUserLogin(req, res) {
     const { email, password } = req.body;
 
-    console.log(req.cookies);
+    try {
+        const user = await dao.getUserByEmail(email);
+        if (user && user.password === password) {
+            delete user.password;
+            const jwt = jsonwebtoken.sign({ userId: user.id, iat: Date.now() }, conf.JWT_SECRET, { expiresIn: "1h" });
 
-    const user = await dao.getUserByEmail(email);
-    const jwt = jsonwebtoken.sign({ userId: user.id, iat: Date.now() }, conf.JWT_SECRET, { expiresIn: "1h" });
+            res.cookie("jwt", jwt, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+            res.status(200).json(user).end();
+            return;
+        }
 
-    res.cookie("jwt", jwt, { httpOnly: true, maxAge: 60 * 60 * 1000 });
-    res.status(200).json(user).end();
+        res.status(401).end();
+    } catch (err) {
+        res.status(500).end();
+    }
 }
 
 function handleUserLogout(req, res) {
     res.clearCookie("jwt").end();
+}
+
+async function getPizzaAvailabilities(req, res) {
+    try {
+        const availabilities = await dao.getPizzaAvailabilities();
+        res.status(200).json(availabilities).end();
+    } catch (err) {
+        console.log(err);
+        res.status(500).json(err).end();
+    }
 }
 
 module.exports = { router };

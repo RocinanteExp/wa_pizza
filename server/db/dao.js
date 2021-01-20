@@ -120,24 +120,42 @@ const promisifyQueryRun = (query) => {
 const saveOrder = (order, userId, callback) => {
     const sqlQueries = generateAddOrderQuery(order);
 
-    db.serialize(async () => {
-        db.run("BEGIN TRANSACTION;");
+    return new Promise((res, rej) => {
+        db.serialize(async () => {
+            db.run("BEGIN TRANSACTION;");
 
-        try {
-            await Promise.all(sqlQueries.map((query) => promisifyQueryRun(query)));
+            try {
+                await Promise.all(sqlQueries.map((query) => promisifyQueryRun(query)));
 
-            db.run("COMMIT;", (err) => {
-                if (err) throw err;
-            });
-        } catch (err) {
-            console.error("catch saveOrder1 =>", err);
-            db.run("ROLLBACK TRANSACTION;", (err) => {
-                if (err) console.error("catch saveOrder2 =>", err);
-            });
-        }
+                db.run("COMMIT;", (err) => {
+                    if (err) rej(err);
+                    else res();
+                });
+            } catch (err) {
+                db.run("ROLLBACK TRANSACTION;", (err) => {
+                    if (err) rej(err);
+                    else res();
+                });
+            }
+        });
     });
+};
 
-    console.log("exiting saveOrder");
+/**
+ * utility funcion to save an order into the database
+ * @param {Object} a order
+ * @param {User} the requesting user
+ * @param {Promise}
+ */
+const updatePizzaAvailabilities = (availabilities) => {
+    const query = "UPDATE PizzaAvailabilities SET small = ?, medium = ?, large = ?";
+
+    return new Promise((res, rej) => {
+        db.run(query, [availabilities.small, availabilities.medium, availabilities.large], (error) => {
+            if (error) rej(error);
+            else res();
+        });
+    });
 };
 
 /**
@@ -179,4 +197,32 @@ const getOrdersByUserId = (userId) => {
     });
 };
 
-module.exports = { open, close, saveOrder, getUserByEmail, generateAddOrderQuery, getOrdersByUserId };
+/**
+ * get the availabilities per pizza
+ * @param {Promise}
+ */
+const getPizzaAvailabilities = () => {
+    return new Promise((res, rej) => {
+        const sql = "SELECT * FROM PizzaAvailabilities";
+
+        db.get(sql, (err, row) => {
+            if (err) {
+                rej(err);
+                return;
+            }
+
+            res(row);
+        });
+    });
+};
+
+module.exports = {
+    close,
+    generateAddOrderQuery,
+    getOrdersByUserId,
+    getPizzaAvailabilities,
+    getUserByEmail,
+    open,
+    saveOrder,
+    updatePizzaAvailabilities,
+};
