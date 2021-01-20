@@ -9,27 +9,24 @@ import print from "../utils/printer";
 /**
  * create ingredient menu
  * @param {Array} of String ingredients
- * @param {Function} handleOnChange
+ * @param {Function} handles.onChange
  * @param {Boolean} showIcons
  * @returns {Component} IngredientsMenu
  **/
-const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
+const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
     // states
     const [numSelected, setNumSelected] = useState({ left: 0, right: 0, both: 0 });
     const [selectedItems, setSelectedItems] = useState([]);
-    const [errorItems, setErrorItems] = useState([]);
     const [currSize, setCurrSize] = useState(size);
+    const [errorItems, setErrorItems] = useState([]);
     const [message, setMessage] = useState({});
 
     const currComponentId = "id-container-pizza-ingredients-menu";
     const currComponentTitle = "Aggiungi Ingredienti!";
 
-    const ingredientsName =
-        size === sys.PIZZA_SIZES.LARGE
-            ? Object.values(sys.PIZZA_INGREDIENTS)
-            : Object.values(sys.PIZZA_INGREDIENTS).filter((i) => i !== "frutti di mare");
+    const ingredientsName = [...names];
     const showIcons = size === sys.PIZZA_SIZES.LARGE ? true : false;
-    const limits = sys.PIZZA_MAX_INGREDIENTS[size];
+    const limits = maxPerSize;
 
     const ingredientsGroupedByInitials = groupByInitials(ingredientsName);
 
@@ -229,7 +226,7 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
                 setSelectedItems(newSelectedItems);
 
                 // callback from parent container
-                handleOnChange(newSelectedItems);
+                handles.onChange(newSelectedItems);
             } else {
                 // pizza large
 
@@ -254,7 +251,7 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
                 setSelectedItems(copySelectedItems);
 
                 // update parent state
-                handleOnChange(copySelectedItems);
+                handles.onChange(copySelectedItems);
 
                 // update numSelected
                 // the ingredient may not have a side yet if the pizza size is LARGE and the ingredient is the last chosen
@@ -341,7 +338,7 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
         }
 
         //update state parent
-        handleOnChange(copySelectedItems);
+        handles.onChange(copySelectedItems);
     };
 
     useEffect(() => {
@@ -352,7 +349,7 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
             setSelectedItems([]);
             setNumSelected({ left: 0, right: 0, both: 0 });
             setErrorItems([]);
-            handleOnChange([]);
+            handles.onChange([]);
         }
         const printStates = () => {
             print.grp("States of PizzaIngredientsMenu");
@@ -371,23 +368,24 @@ const PizzaIngredientsMenu = ({ handleOnChange, size }) => {
         }
 
         printStates();
-    }, [size, currSize, numSelected, errorItems, selectedItems, limits, message, handleOnChange]);
+    }, [size, currSize, numSelected, errorItems, selectedItems, limits, message, handles]);
 
     return (
-        <Container id={currComponentId} title={currComponentTitle}>
+        <>
             <Dialog type="hidden" {...message} />
-            {ingredientsGroupedByInitials.map((group) =>
-                createIngredientsGroup({
-                    group,
-                    handleChangeIcon,
-                    handleIngredientTick,
-                    errorItems,
-                    showIcons,
-                    selectedItems,
-                })
-            )}
-        </Container>
-        //</div>
+            <Container id={currComponentId} title={currComponentTitle}>
+                {ingredientsGroupedByInitials.map((group) =>
+                    createIngredientsGroup({
+                        group,
+                        handleChangeIcon,
+                        handleIngredientTick,
+                        errorItems,
+                        showIcons,
+                        selectedItems,
+                    })
+                )}
+            </Container>
+        </>
     );
 };
 
@@ -473,11 +471,7 @@ const CreateIngredientRow = ({
     return (
         <ContainerFlex id={id} key={key} crossAxis="center">
             <input checked={tickChecked} id={inputId} value={displayName} type="checkbox" onChange={onChange}></input>
-            <label
-                className="container-flex flex-cross-center"
-                style={{ minWidth: "max(50%, 20ch)" }}
-                htmlFor={inputId}
-            >
+            <label className="container-flex flex-ca-center" style={{ minWidth: "max(50%, 20ch)" }} htmlFor={inputId}>
                 {displayName}
             </label>
             {showIcons && tickChecked && createPizzaIcons({ ingredientName, handleChangeIcon, radioChecked, isError })}

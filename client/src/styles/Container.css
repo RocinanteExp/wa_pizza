@@ -1,6 +1,17 @@
 .container {
     position: relative;
+}
+
+.container.padding {
     padding: 1rem 1.5rem;
+}
+
+.container.margin-bottom {
+    margin-bottom: 1.5rem;
+}
+
+.container.container-form {
+    min-width: 400px;
 }
 
 .container-flex {
@@ -23,11 +34,21 @@
 .flex-ca-center {
     align-items: center;
 }
-/*
-.flex-main-center {
+
+.flex-it-gr-sh {
+    flex: 1 1 auto;
+}
+
+.flex-ma-center {
     justify-content: center;
 }
 
+.container-flex.container-summary {
+    padding-right: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/*
 .flex-main-sb {
     justify-content: space-between;
 }

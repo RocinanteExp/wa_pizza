@@ -1,0 +1,138 @@
+import { useState, useEffect } from "react";
+import { OrderForm } from "./OrderForm";
+import { OrderPreview } from "./OrderPreview";
+import { ContainerFlex } from "./Container";
+import { Dialog } from "./Dialog";
+import sys from "../utils/constants";
+import utils from "../utils/utils";
+import OrderItem from "../entities/OrderItem";
+import print from "../utils/printer";
+import customerApi from "../api/customerApi";
+import generalApi from "../api/generalApi";
+
+const templateForm = {
+    sizes: Object.values(sys.PIZZA_SIZES),
+    ingredientsName: Object.values(sys.PIZZA_INGREDIENTS),
+    requests: undefined,
+    quantity: 1,
+};
+const debugOrders = [
+    new OrderItem(
+        "medium",
+        [
+            { name: "Bacon", side: "both" },
+            { name: "Verdure", side: "both" },
+        ],
+        4,
+        sys.PIZZA_PRICES["MEDIUM"]
+    ),
+    new OrderItem(
+        "large",
+        [
+            { name: "Bacon", side: "left" },
+            { name: "Verdure", side: "right" },
+            { name: "Frutti di mare", side: "both" },
+        ],
+        4,
+        sys.PIZZA_PRICES["LARGE"]
+    ),
+];
+
+/**
+ * All the current order's items shown on the OrderPreview are stored in the state "orderItems".
+ * Each time an item is been submitted from the OrderForm, the state "orderItems" is updated
+ * maxQuantityPerPizza represents the maximum number of pizza per type that a customer can order
+ * PIZZA_MAX_QUANTITIES = { small: 0, medium: 8, large: 10 };
+ **/
+const OrderBuilder = () => {
+    const [orderItems, setOrderItems] = useState([]);
+    const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ ...sys.PIZZA_MAX_QUANTITIES });
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+
+    const handleFormSubmit = (item) => {
+        print.grp("Submitting order (OrderBuilder)");
+        print.out(item);
+        print.grpend();
+
+        setOrderItems([...orderItems, item]);
+        setMaxQuantityPerPizza((maxQuantityPerPizza) => ({
+            ...maxQuantityPerPizza,
+            [item.size]: maxQuantityPerPizza[item.size] - item.quantity,
+        }));
+        //handleChangeMaxQuantityPerPizza(opOnMaxQuantityPerPizza(item.size, opcode.MINUS, item.quantity));
+    };
+
+    const reset = async () => {
+        setMaxQuantityPerPizza(await generalApi.getPizzaAvailabilities());
+        setOrderItems([]);
+    };
+
+    const handleOrderSubmit = async () => {
+        try {
+            const status = await customerApi.sendOrder(1, orderItems);
+            switch (status) {
+                case 204: {
+                    setMessage("Ordine inviato correttamente");
+                    reset();
+                    break;
+                }
+                case 409: {
+                    const availabilities = await generalApi.getPizzaAvailabilities();
+                    setMessage("La quantità è insufficiente");
+                    break;
+                }
+                default: {
+                }
+            }
+        } catch (err) {
+            setError("Server Connection Error");
+            reset();
+        }
+    };
+
+    // utility function to update the state maxQuantityPerPizza.
+    // Called whenever an item's order has been successfully added "orderItems"
+    //const handleChangeMaxQuantityPerPizza = (value) => {
+    //    setMaxQuantityPerPizza((maxQuantityPerPizza) => ({ ...maxQuantityPerPizza, ...value }));
+    //};
+
+    // called by the orderPreview
+    const handleOrderItemRemove = (indexItem) => {
+        const item = orderItems[indexItem];
+
+        const newOrders = utils.removeItemFromArray(orderItems, indexItem);
+
+        setMaxQuantityPerPizza((maxQuantityPerPizza) => ({
+            ...maxQuantityPerPizza,
+            [item.size]: maxQuantityPerPizza[item.size] + item.quantity,
+        }));
+        //handleChangeMaxQuantityPerPizza(opOnMaxQuantityPerPizza(item.size, opcode.PLUS, item.quantity));
+        setOrderItems(newOrders);
+    };
+
+    useEffect(() => {
+        print.grp("Current orderItems (OrderBuilder)");
+        print.tb(orderItems);
+        print.out(maxQuantityPerPizza);
+        print.grpend();
+
+        if (message) setTimeout(() => setMessage(""), 1500);
+    }, [orderItems, maxQuantityPerPizza, message]);
+
+    return (
+        <main>
+            {message ? <Dialog type="info" message={message} /> : null}
+            {error ? <Dialog type="error" message={error} /> : null}
+            <ContainerFlex padding={true}>
+                <OrderForm maxQuantityPerPizza={maxQuantityPerPizza} handles={{ onSubmit: handleFormSubmit }} />
+                <OrderPreview
+                    items={orderItems}
+                    handles={{ onRemove: handleOrderItemRemove, onSubmit: handleOrderSubmit }}
+                />
+            </ContainerFlex>
+        </main>
+    );
+};
+
+export default OrderBuilder;

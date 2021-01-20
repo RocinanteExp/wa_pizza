@@ -3,6 +3,7 @@ import "../styles/Button.css";
 const colorMap = {
     dark: "btn-dark",
     green: "btn-green",
+    primary: "btn-primary",
 };
 
 const statusMap = {
@@ -10,12 +11,7 @@ const statusMap = {
     active: "btn-active",
 };
 
-const Button = ({ id, color, status = {}, handles, children, type }) => {
-    //console.group("Button")
-    //console.log(id);
-    //console.log(status);
-    //console.log(handles);
-    //console.groupEnd();
+const Button = ({ id, color, status = {}, handles, children, disabled = false, className}) => {
     const classes = ["btn"];
     if (color) {
         classes.push(colorMap[color]);
@@ -25,7 +21,7 @@ const Button = ({ id, color, status = {}, handles, children, type }) => {
     }
 
     return (
-        <button id={id} {...handles} className={classes.join(" ")} {...handles} disabled={status.disabled}>
+        <button id={id} {...handles} disabled={!!disabled} className={classes.join(" ") + className} {...handles}>
             {children}
         </button>
     );

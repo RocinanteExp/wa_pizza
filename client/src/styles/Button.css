@@ -11,6 +11,11 @@
     color: #fff;
 }
 
+.btn-primary {
+    background: rgb(169, 46, 35);
+    color: #fff;
+}
+
 /* pseudo classes */
 .btn:hover {
     filter: brightness(75%);

@@ -26,21 +26,17 @@ function addItemToArray(array, elem) {
     return ret;
 }
 
-function validateOrder(order) {
-    const maxQuantity = constants.PIZZA_MAX_QUANTITIES[order.size];
+function validateOrder(orderItem) {
     const ret = {};
-    console.log("VALIDATORE");
-    console.log(order);
-    console.log(maxQuantity);
 
-    // check if the order is empty
-    if (order.ingredients.length === 0) return { error: factoryError(errno.PIZZA_INGREDIENTS_EMPTY) };
+    if (orderItem.size === "") return { error: factoryError(errno.PIZZA_SIZE_EMPTY) };
 
-    // check if the quantity exceed the max quantity
-    if (order.quantity > maxQuantity)
-        return { error: factoryError(errno.PIZZA_QUANTITY_EXCEEDED, { maxQuantity, size: order.size }) };
-    else if (order.quantity <= 0)
-        return { error: factoryError(errno.PIZZA_QUANTITY_MINIMUM, { minQuantity: 1, size: order.size }) };
+    // check if the orderItem is empty
+    if (orderItem.ingredients.length === 0) return { error: factoryError(errno.PIZZA_INGREDIENTS_EMPTY) };
+
+    // check if the quantity is less than 1
+    if (orderItem.quantity <= 0)
+        return { error: factoryError(errno.PIZZA_QUANTITY_MINIMUM, { minQuantity: 1, size: orderItem.size }) };
 
     return ret;
 }

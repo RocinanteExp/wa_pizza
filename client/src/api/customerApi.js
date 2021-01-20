@@ -1,20 +1,24 @@
 const BASE_URL = "api/v1";
 
 async function getCustomerOrdersHistory(customerId) {
-    const response = await fetch(`${BASE_URL}/customers/${customerId}/orders`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
-    });
+    try {
+        const response = await fetch(`${BASE_URL}/customers/${customerId}/orders`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
 
-    if (response.ok) {
-        const orders = await response.json();
+        if (response.ok) {
+            const orders = await response.json();
 
-        return Promise.resolve(orders);
+            Promise.resolve(orders);
+            return;
+        }
+        Promise.reject(response.status);
+    } catch (err) {
+        Promise.reject("Generic Error");
     }
-
-    return Promise.reject(response.status);
 }
 
 async function sendOrder(customerId, order) {
@@ -26,11 +30,7 @@ async function sendOrder(customerId, order) {
         body: JSON.stringify(order),
     });
 
-    if (response.ok) {
-        Promise.resolve(response.status);
-    }
-
-    Promise.reject(response.status);
+    return response.status;
 }
 
 const api = { getCustomerOrdersHistory, sendOrder };

@@ -1,187 +1,69 @@
 import "../styles/App.css";
-import { useState, useEffect, StrictMode, createContext, useContext } from "react";
-import { OrderForm } from "./OrderForm";
-import { Container } from "./Container";
+import "../styles/Container.css";
+import { useState, createContext, useContext, useEffect } from "react";
 import { OrdersHistory } from "./OrdersHistory";
+import OrderBuilder from "./OrderBuilder";
 import Login from "./Login";
-import { OrderPreview } from "./OrderPreview";
-import sys from "../utils/constants";
-import utils from "../utils/utils";
-import Order from "../entities/Order";
-import print from "../utils/printer";
-import generalApi from "../api/generalApi";
 import { BrowserRouter as Router, Switch, Route, Link, Redirect } from "react-router-dom";
 
 const UserContext = createContext(null);
 
-const MainNavbar = () => {
+const Navbar = () => {
     const user = useContext(UserContext);
 
     return (
-        <nav className="main-nav">
-            <ul>
-                <li>{user ? `${user.name}` : <Link to="/login">Login</Link>}</li>
-                <li>
+        <nav className="navbar">
+            <ul className="container-flex">
+                <li className="navbar-list-item">{user ? `${user.name}` : <Link to="/login">Login</Link>}</li>
+                <li className="navbar-list-item">
                     <Link to="/order">Ordina</Link>
                 </li>
-                <li>{user ? <Link to="/history">I miei ordini</Link> : null} </li>
+                {user ? (
+                    <li className="navbar-list-item">
+                        <Link to="/history">I miei ordini</Link>
+                    </li>
+                ) : null}
             </ul>
         </nav>
-    );
-};
-
-const Header = () => {
-    return (
-        <div className="main-header">
-            <div className="logo"></div>
-            <MainNavbar />
-        </div>
-    );
-};
-
-const templateForm = {
-    sizes: Object.values(sys.PIZZA_SIZES),
-    ingredientsName: Object.values(sys.PIZZA_INGREDIENTS),
-    requests: undefined,
-    quantity: 1,
-};
-
-/**
- * All the current orders shown on the OrderPreview are stored in the state "orders".
- * Each time an order is been submitted from the OrderForm, the state "orders" is updated
- **/
-
-const debugOrders = [
-    new Order(
-        "medium",
-        [
-            { name: "Bacon", side: "both" },
-            { name: "Verdure", side: "both" },
-        ],
-        4,
-        sys.PIZZA_PRICES["MEDIUM"]
-    ),
-    new Order(
-        "large",
-        [
-            { name: "Bacon", side: "left" },
-            { name: "Verdure", side: "right" },
-            { name: "Frutti di mare", side: "both" },
-        ],
-        4,
-        sys.PIZZA_PRICES["LARGE"]
-    ),
-];
-
-//const debugOrders = [
-//    {
-//        size: "medium",
-//        quantity: 4,
-//        requests: undefined,
-//        ingredients: [
-//            { name: "Bacon", side: "both" },
-//            { name: "Verdure", side: "both" },
-//        ],
-//    },
-//    {
-//        size: "large",
-//        quantity: 4,
-//        requests: undefined,
-//        ingredients: [
-//            { name: "Bacon", side: "left" },
-//            { name: "Verdure", side: "right" },
-//            { name: "Frutti di mare", side: "both" },
-//        ],
-//    },
-//];
-
-const OrderBuilder = () => {
-    const [orders, setOrders] = useState(debugOrders);
-    const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ ...sys.PIZZA_MAX_QUANTITIES });
-
-    const opcode = {
-        MINUS: 0,
-        PLUS: 1,
-    };
-
-    const opOnMaxQuantityPerPizza = (side, op, quantity) => {
-        switch (op) {
-            case opcode.MINUS: {
-                return { [side]: maxQuantityPerPizza[side] - quantity };
-            }
-            case opcode.PLUS: {
-                return { [side]: maxQuantityPerPizza[side] + quantity };
-            }
-            default:
-                break;
-        }
-    };
-
-    const handleSubmitOrders = (order) => {
-        print.grp("Submitting order (OrderBuilder)");
-        print.out(order);
-        print.grpend();
-
-        setOrders([...orders, order]);
-        handleChangeMaxQuantityPerPizza(opOnMaxQuantityPerPizza(order.size, opcode.MINUS, order.quantity));
-    };
-
-    const handleChangeMaxQuantityPerPizza = (value) => {
-        setMaxQuantityPerPizza((maxQuantityPerPizza) => ({ ...maxQuantityPerPizza, ...value }));
-    };
-
-    const handleOrderRemove = (indexOrder) => {
-        const newOrders = utils.removeItemFromArray(orders, indexOrder);
-        setOrders(newOrders);
-    };
-
-    useEffect(() => {
-        print.grp("Current orders (OrderBuilder)");
-        print.tb(orders);
-        print.out(maxQuantityPerPizza);
-        print.grpend();
-    });
-
-    return (
-        <main className="container-flex flex-main-center main-content">
-            <OrderForm
-                sizes={templateForm.sizes}
-                maxQuantityPerPizza={maxQuantityPerPizza}
-                handles={{ onSubmit: handleSubmitOrders }}
-            />
-            <OrderPreview orders={orders} handles={{ onRemove: handleOrderRemove }} />
-        </main>
     );
 };
 
 const App = () => {
     const [user, setUser] = useState(null);
 
+    useEffect(() => {
+        console.log("Utente");
+        console.log(user);
+    }, [user]);
+
     return (
-        <StrictMode>
-            <div>
-                <UserContext.Provider value={user}>
-                    <Router>
-                        <Header />
-                        <Switch>
-                            <Route path="/login">
-                                <Login handles={{ onLogin: generalApi.userLogin }} />
-                            </Route>
-                            <Route path="/order">
-                                <OrderBuilder />
-                            </Route>
-                            <Route path="/history">
-                                <OrdersHistory />
-                            </Route>
-                            <Route path="/">
-                                <Redirect to={`/${user ? "history" : "login"}`} />
-                            </Route>
-                        </Switch>
-                    </Router>
-                </UserContext.Provider>
-            </div>
-        </StrictMode>
+        <div>
+            <UserContext.Provider value={user}>
+                <Router>
+                    <Navbar />
+                    <Switch>
+                        <Route path="/login">
+                            {user ? (
+                                <Redirect to={"/history"} />
+                            ) : (
+                                <Login handles={{ onLogin: (user) => setUser(user) }} />
+                            )}
+                        </Route>
+                        <Route path="/order">
+                            <OrderBuilder />
+                        </Route>
+                        <Route path="/history">
+                            <OrdersHistory />
+                        </Route>
+                        <Route path="/">
+                            <Redirect to={`/${user ? "history" : "login"}`} />
+                        </Route>
+                    </Switch>
+                </Router>
+            </UserContext.Provider>
+        </div>
     );
 };
 
+export UserContext;
 export default App;

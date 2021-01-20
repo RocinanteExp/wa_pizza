@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+
 import { ContainerFlex } from "./Container";
 import { TableOrder } from "./Table";
 import api from "../api/customerApi";
 import sys from "../utils/constants";
-import Order from "../entities/Order";
+import OrderItem from "../entities/OrderItem";
 
 const AccordionOrder = (order) => {
     const key = `key-accordion-order-${order[0].orderId}`;
@@ -19,7 +20,7 @@ const AccordionOrder = (order) => {
     const handleOnToggle = (event) => {
         console.log(event.target.open);
     };
-    //<ListOrder items={order} />
+
     return (
         <ContainerFlex mainAxis="spaceBetween" style={{ maxWidth: "max(50%, 804px)" }}>
             <details key={key} onToggle={handleOnToggle}>
@@ -40,7 +41,7 @@ function generateSummaries(o) {
 }
 
 const OrdersHistory = () => {
-    const userId = 1;
+    const user = useContext(MyContext);
     const [pastOrders, setPastOrders] = useState([]);
 
     useEffect(() => {
@@ -107,7 +108,7 @@ function parseJsonOrder(jsonOrder) {
         return { name: splits[0], side: splits[1].trim() };
     });
 
-    return new Order(
+    return new OrderItem(
         jsonOrder.size,
         ingredients,
         jsonOrder.quantity,

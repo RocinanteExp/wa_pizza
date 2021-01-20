@@ -1,6 +1,6 @@
 import sys from "../utils/constants";
 
-class Order {
+class OrderItem {
     constructor(size, ingredients, quantity, price, requests, id) {
         this.size = size;
         this.ingredients = ingredients;
@@ -63,4 +63,4 @@ class Order {
     }
 }
 
-export default Order;
+export default OrderItem;

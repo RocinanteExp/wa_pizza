@@ -48,8 +48,7 @@ const constants = {
     PIZZA_SIDES,
     PIZZA_PRICES,
     TABLE_ORDER_HEADER,
-    TABLE_ROW_ORDER_ITEM_MAPPINGS
+    TABLE_ROW_ORDER_ITEM_MAPPINGS,
 };
-
 
 export default constants;

@@ -11,11 +11,10 @@ async function userLogin(email, password) {
 
     if (response.ok) {
         const user = await response.json();
-        console.log(user);
-        return Promise.resolve(user);
-    }
+        return user;
+    } 
 
-    return Promise.reject();
+    return response.status;
 }
 
 async function userLogout(email, password) {
@@ -36,5 +35,27 @@ async function userLogout(email, password) {
     return Promise.reject();
 }
 
-const api = { userLogin, userLogout };
+async function getPizzaAvailabilities() {
+    try {
+        const response = await fetch(BASE_URL + "/pizzas/availabilities", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            const ret = await response.json();
+            delete ret.id;
+
+            return ret;
+        } else {
+            throw new Error("Server connection error");
+        }
+    } catch (err) {
+        throw new Error("Server connection error");
+    }
+}
+
+const api = { userLogin, userLogout, getPizzaAvailabilities };
 export default api;

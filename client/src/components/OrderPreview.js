@@ -1,59 +1,65 @@
-//import sys from "../utils/constants";
 import { Container, ContainerFlex } from "./Container";
 import { Button } from "./Button";
 
 let keyCounter = 0;
 
-//const createQuantitySelect = (maxQuantity, defaultQuantity, callback) => {
-//    const optionTags = [];
-//    optionTags.push(<option value="Rimuovi">Rimuovi</option>);
-//    for (let i = 1; i <= maxQuantity; i++) {
-//        optionTags.push(
-//            <option value={i} selected={defaultQuantity === i ? "selected" : ""}>
-//                {i}
-//            </option>
-//        );
-//    }
-//
-//    return (
-//        <select
-//            onChange={(event) => {
-//                if (event.target.value === "Rimuovi") callback();
-//            }}
-//            class="select"
-//        >
-//            {optionTags}
-//        </select>
-//    );
-//};
+const createQuantitySelect = (maxQuantity, defaultQuantity, cb1, cb2) => {
+    const optionTags = [];
 
-const createOrderBullet = (pizzaOrder, callback) => {
+    optionTags.push(<option value="Rimuovi">Rimuovi</option>);
+
+    for (let i = 1; i <= maxQuantity; i++) {
+        optionTags.push(
+            <option value={i} selected={defaultQuantity === i ? "selected" : ""}>
+                {i}
+            </option>
+        );
+    }
+
+    return (
+        <select
+            onChange={(event) => {
+                if (event.target.value === "Rimuovi") cb1();
+                else {
+                    console.log("SONO TARGET", event.target);
+                    cb2(event.target.value)
+                }
+            }}
+            class="select"
+        >
+            {optionTags}
+        </select>
+    );
+};
+
+const createBullet = (itemOrder, handleOnRemove, handleOnChange) => {
     const key = `key-li-${keyCounter++}`;
 
-    //<li key={key} className="container-flex flex-cross-center">
+    //const handleClickButton = () => {
+    //    callback();
+    //};
 
-    const handleClickButton = (event) => {
-        console.log("SONO BOTTONE", event);
-        callback();
-    };
+    const { size, ingredients = [], requests, quantity } = itemOrder;
 
-    const { size, ingredients = [], requests, quantity } = pizzaOrder;
+    //<ContainerFlex key={key} crossAxis="center">
+    //    <Button color="dark" aria-label="delete" handles={{ onClick: handleClickButton }}>
+    //        <span aria-hidden="true">&times;</span>
+    //    </Button>
+    //    <ContainerFlex dir="column" padding="true" className="flex-it-gr-sh">
     return (
         <ContainerFlex key={key} crossAxis="center">
-            <Button color="dark" aria-label="Close" handles={{ onClick: handleClickButton }}>
-                <span aria-hidden="true">&times;</span>
-            </Button>
-            <ContainerFlex dir="column">
+            {createQuantitySelect(itemOrder.quantity, itemOrder.quantity, handleOnRemove, handleOnChange)}
+            <ContainerFlex dir="column" padding="true" className="flex-it-gr-sh">
                 <ContainerFlex mainAxis="spaceBetween">
                     <span>{`${quantity} x Pizza ${size}`}</span>
-                    <span>{`${pizzaOrder.getSubTotal()} €`}</span>
+                    <span>{`${itemOrder.getSubTotal().toFixed(2)} €`}</span>
                 </ContainerFlex>
-                <span>{`Ingredienti: ${ingredients.map((i) => i.name).join(", ")}`}</span>
-                <span>{`Richieste: ${requests ? requests : "none"}`}</span>
-                {pizzaOrder.extra ? (
+                <span>{`Ingredienti: ${ingredients.map((i) => i.name.toLowerCase()).join(", ")}`}</span>
+                <span>{`Richieste: ${requests ? requests : "nessuna"}`}</span>
+                {itemOrder.extra ? (
                     <ContainerFlex mainAxis="spaceBetween">
                         <span>{`Extra: `}</span>
-                        <span>{`+${(pizzaOrder.getSubTotal() * pizzaOrder.extra) / 100} €`}</span>
+                        <span>{`+${itemOrder.extra.toFixed(2)} €`}</span>
                     </ContainerFlex>
                 ) : null}
             </ContainerFlex>
@@ -61,19 +67,25 @@ const createOrderBullet = (pizzaOrder, callback) => {
     );
 };
 
-const OrdersList = ({ orders, handleOrderRemove }) => {
+const ListItems = ({ items, handles }) => {
     return (
         <Container>
-            {orders.map((order, index) =>
-                createOrderBullet(order, () => {
-                    handleOrderRemove(index);
-                })
+            {items.map((item, index) =>
+                createBullet(
+                    item,
+                    () => {
+                        handles.onRemove(index);
+                    },
+                    (quantity) => {
+                        handles.onChange(index, item.quantity - quantity);
+                    }
+                )
             )}
         </Container>
     );
 };
 
-function computeSubTotal(orders) {
+function computeSubtotal(orders) {
     let total = 0;
     orders.forEach((order) => (total += order.getSubTotal()));
     return total;
@@ -81,8 +93,8 @@ function computeSubTotal(orders) {
 
 function computeExtras(orders) {
     let total = 0;
-    orders.forEach((order) => (total += order.getSubTotal() * order.extra));
-    return total / 100;
+    orders.forEach((order) => (total += order.extra));
+    return total;
 }
 
 function totalNumPizza(orders) {
@@ -92,45 +104,42 @@ function totalNumPizza(orders) {
 }
 
 function computeDiscount(orders) {
-    let total = 0;
-    orders.forEach((order) => (total += order.getSubTotalWithExtras() * order.discount));
-    return total / 100;
+    if (totalNumPizza(orders) < 3) return 0;
+
+    const total = computeSubtotal(orders) + computeExtras(orders);
+    return total * 0.1;
 }
 
-const OrderPreview = ({ orders, handles }) => {
-    const subTotal = computeSubTotal(orders);
-    const extras = computeExtras(orders);
-    const totQuantity = totalNumPizza(orders);
-    const discount = computeDiscount(orders);
-
-    const handleOrderSubmit = () => {
-        console.log(orders);
-        console.log(JSON.stringify(orders));
-    };
+const OrderPreview = ({ items, handles }) => {
+    const totQuantity = totalNumPizza(items);
+    const subtotal = computeSubtotal(items);
+    const extras = computeExtras(items);
+    const discount = computeDiscount(items);
 
     return (
         <Container id="id-order-preview" title="Il tuo Ordine">
-            <OrdersList orders={orders} handleOrderRemove={handles.onRemove} />
-            <ContainerFlex dir="column">
+            <ListItems items={items} handles={{ onRemove: handles.onRemove, onChange: handles.onChange }} />
+            <ContainerFlex dir="column" className="container-summary">
                 <ContainerFlex mainAxis="spaceBetween">
                     <span>Subtotale:</span>
-                    <span>{subTotal ? `${subTotal} €` : subTotal}</span>
+                    <span>{subtotal ? `${subtotal.toFixed(2)} €` : subtotal}</span>
                 </ContainerFlex>
                 <ContainerFlex mainAxis="spaceBetween">
+                    {" "}
                     <span>Costi aggiuntivi:</span>
-                    <span>{extras ? `+${extras} €` : extras}</span>
+                    <span>{extras ? `+${extras.toFixed(2)} €` : extras}</span>
                 </ContainerFlex>
                 <ContainerFlex mainAxis="spaceBetween">
                     <span>{`Sconto (${totQuantity ? "10%" : 0})`}</span>
-                    <span>{discount ? `-${discount} €` : 0}</span>
+                    <span>{discount ? `-${discount.toFixed(2)} €` : 0}</span>
                 </ContainerFlex>
                 <ContainerFlex mainAxis="spaceBetween">
                     <span>Totale complessivo:</span>
-                    <span>{`${subTotal + extras - discount} €`}</span>
+                    <span>{`${(subtotal + extras - discount).toFixed(2)} €`}</span>
                 </ContainerFlex>
             </ContainerFlex>
-            <Button color="dark" handles={{ onClick: handleOrderSubmit }}>
-                Ordina Adesso
+            <Button color="dark" handles={{ onClick: handles.onSubmit }} disabled={items.length ? false : true}>
+                {items.length ? "Ordina Adesso" : "Niente da inviare"}
             </Button>
         </Container>
     );
