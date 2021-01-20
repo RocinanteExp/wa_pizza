@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
+import { ContainerFlex } from "./Container";
 import generalApi from "../api/generalApi";
 
 const Logout = ({ handles }) => {
@@ -30,14 +31,16 @@ const Logout = ({ handles }) => {
             {message ? (
                 <Dialog type={typeMessage} message={message} handles={{ onClick: () => setMessage("") }} />
             ) : null}
-            <Button
-                className="form-btn-submit"
-                disabled={isWaiting}
-                color="primary"
-                handles={{ onClick: handleLogout }}
-            >
-                {isWaiting ? "Waiting..." : "Logout"}
-            </Button>
+            <ContainerFlex className="container-logout" mainAxis="center" crossAxis="center">
+                <Button
+                    className="form-btn-submit"
+                    disabled={isWaiting}
+                    color="primary"
+                    handles={{ onClick: handleLogout }}
+                >
+                    {isWaiting ? "Waiting..." : "Logout"}
+                </Button>
+            </ContainerFlex>
         </>
     );
 };

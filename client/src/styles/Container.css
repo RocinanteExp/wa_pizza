@@ -48,6 +48,11 @@
     margin-bottom: 1.5rem;
 }
 
+.container-flex.container-logout {
+    font-size: 2rem;
+    height: 10rem;
+}
+
 /*
 .flex-main-sb {
     justify-content: space-between;
