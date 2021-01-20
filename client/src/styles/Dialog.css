@@ -17,7 +17,8 @@
     background-color: rgb(12, 92, 155);
 }
 
-.dialog-warning {
+.dialog-tooltip {
+    height: auto;
     background-color: rgb(173, 105, 4);
 }
 

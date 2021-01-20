@@ -1,6 +1,6 @@
 import { ContainerFlex, Container } from "./Container";
 import generalApi from "../api/generalApi";
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -32,6 +32,11 @@ const Login = ({ handles }) => {
         }
     };
 
+    function genMessage(type, msg) {
+        setTypeMessage(type);
+        setMessage(msg);
+    }
+
     const handleOnSubmit = async (event) => {
         event.preventDefault();
 
@@ -42,15 +47,12 @@ const Login = ({ handles }) => {
                 const ret = await generalApi.userLogin(email, password);
                 if (typeof ret === "object") {
                     handles.onLogin(ret);
-                    //setTypeMessage("info");
-                    //setMessage("Utente trovato");
                     return;
                 }
 
                 switch (ret) {
                     case 401: {
-                        setTypeMessage("info");
-                        setMessage("Email e/o password non validi");
+                        genMessage("info", "Email e/o password non validi");
                         break;
                     }
                     default: {
@@ -58,8 +60,7 @@ const Login = ({ handles }) => {
                     }
                 }
             } catch (err) {
-                setTypeMessage("error");
-                setMessage("Fallita la connessione con il server. Ricarica la pagina");
+                genMessage("error", "Fallita la connessione con il server. Ricarica la pagina");
             } finally {
                 setIsWaiting(false);
             }
@@ -67,6 +68,8 @@ const Login = ({ handles }) => {
             formEl.current.reportValidity();
         }
     };
+
+    useEffect(() => {}, []);
 
     return (
         <>

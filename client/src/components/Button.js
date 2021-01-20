@@ -11,7 +11,7 @@ const statusMap = {
     active: "btn-active",
 };
 
-const Button = ({ id, color, status = {}, handles, children, disabled = false, className}) => {
+const Button = ({ id, color, status = {}, handles, children, disabled = false, className }) => {
     const classes = ["btn"];
     if (color) {
         classes.push(colorMap[color]);
@@ -20,8 +20,10 @@ const Button = ({ id, color, status = {}, handles, children, disabled = false, c
         classes.push(statusMap[status.active]);
     }
 
+    const classNameString = className ? classes.join(" ") + " " + className : classes.join(" ");
+
     return (
-        <button id={id} {...handles} disabled={!!disabled} className={classes.join(" ") + className} {...handles}>
+        <button id={id} {...handles} disabled={!!disabled} className={classNameString} {...handles}>
             {children}
         </button>
     );

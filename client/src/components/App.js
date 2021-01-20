@@ -11,16 +11,26 @@ const UserContext = createContext(null);
 const Navbar = () => {
     const user = useContext(UserContext);
 
+    //{user ? (
+    //    <li className="navbar-list-item">
+    //        <Link to="/history">I miei ordini</Link>
+    //    </li>
+    //) : null}
     return (
         <nav className="navbar">
             <ul className="container-flex">
-                <li className="navbar-list-item">{user ? `${user.name}` : <Link to="/login">Login</Link>}</li>
+                <li className="navbar-list-item">
+                    {user ? `${user.name} ${user.surname}` : <Link to="/login">Login</Link>}
+                </li>
                 <li className="navbar-list-item">
                     <Link to="/order">Ordina</Link>
                 </li>
+                <li className="navbar-list-item">
+                    <Link to="/history">I miei ordini</Link>
+                </li>
                 {user ? (
                     <li className="navbar-list-item">
-                        <Link to="/history">I miei ordini</Link>
+                        <Link to="/logout">Logout</Link>
                     </li>
                 ) : null}
             </ul>
@@ -65,5 +75,5 @@ const App = () => {
     );
 };
 
-export UserContext;
+export { UserContext };
 export default App;

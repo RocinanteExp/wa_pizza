@@ -3,6 +3,8 @@ const errno = {
     PIZZA_QUANTITY_EXCEEDED: 11,
     PIZZA_QUANTITY_MINIMUM: 12,
     PIZZA_SIZE_EMPTY: 13,
+    SERVER_FAILED_CONNECTION: 20,
+    USER_LOGIN_REQUIRED: 21,
 };
 
 const factoryError = (code, args = null) => {
@@ -37,8 +39,24 @@ class Error {
             }
             default: {
                 console.log(`${this.code} not implemented in Error.createMessage`);
-
                 break;
+            }
+        }
+    }
+
+    static getMessage(code) {
+        switch (code) {
+            case errno.SERVER_FAILED_CONNECTION: {
+                const message = "Fallita la connessione con il server. Ricarica la pagina";
+                return message;
+            }
+            case errno.USER_LOGIN_REQUIRED: {
+                const message = "Devi effettuare il login per accedere a questa risorsa";
+                return message;
+            }
+            default: {
+                console.log(`errno: ${errno} not implemented in Error.getErrorMessage`);
+                return "";
             }
         }
     }

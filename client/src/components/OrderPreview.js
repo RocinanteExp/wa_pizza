@@ -21,8 +21,7 @@ const createQuantitySelect = (maxQuantity, defaultQuantity, cb1, cb2) => {
             onChange={(event) => {
                 if (event.target.value === "Rimuovi") cb1();
                 else {
-                    console.log("SONO TARGET", event.target);
-                    cb2(event.target.value)
+                    cb2(event.target.value);
                 }
             }}
             class="select"
@@ -35,27 +34,18 @@ const createQuantitySelect = (maxQuantity, defaultQuantity, cb1, cb2) => {
 const createBullet = (itemOrder, handleOnRemove, handleOnChange) => {
     const key = `key-li-${keyCounter++}`;
 
-    //const handleClickButton = () => {
-    //    callback();
-    //};
-
     const { size, ingredients = [], requests, quantity } = itemOrder;
 
-    //<ContainerFlex key={key} crossAxis="center">
-    //    <Button color="dark" aria-label="delete" handles={{ onClick: handleClickButton }}>
-    //        <span aria-hidden="true">&times;</span>
-    //    </Button>
-    //    <ContainerFlex dir="column" padding="true" className="flex-it-gr-sh">
     return (
         <ContainerFlex key={key} crossAxis="center">
             {createQuantitySelect(itemOrder.quantity, itemOrder.quantity, handleOnRemove, handleOnChange)}
             <ContainerFlex dir="column" padding="true" className="flex-it-gr-sh">
                 <ContainerFlex mainAxis="spaceBetween">
                     <span>{`${quantity} x Pizza ${size}`}</span>
-                    <span>{`${itemOrder.getSubTotal().toFixed(2)} €`}</span>
+                    <span>{`${itemOrder.subtotal.toFixed(2)} €`}</span>
                 </ContainerFlex>
                 <span>{`Ingredienti: ${ingredients.map((i) => i.name.toLowerCase()).join(", ")}`}</span>
-                <span>{`Richieste: ${requests ? requests : "nessuna"}`}</span>
+                <span>{`Richieste: ${requests ? requests.split("-").join(" ") : "nessuna"}`}</span>
                 {itemOrder.extra ? (
                     <ContainerFlex mainAxis="spaceBetween">
                         <span>{`Extra: `}</span>
@@ -85,35 +75,32 @@ const ListItems = ({ items, handles }) => {
     );
 };
 
-function computeSubtotal(orders) {
-    let total = 0;
-    orders.forEach((order) => (total += order.getSubTotal()));
+function computeSubtotal(items) {
+    const total = items.reduce((total, order) => (total += order.subtotal), 0);
     return total;
 }
 
-function computeExtras(orders) {
-    let total = 0;
-    orders.forEach((order) => (total += order.extra));
+function computeExtra(items) {
+    const total = items.reduce((total, order) => (total += order.extra), 0);
     return total;
 }
 
-function totalNumPizza(orders) {
-    let total = 0;
-    orders.forEach((order) => (total += order.quantity));
+function totalNumPizza(items) {
+    const total = items.reduce((total, order) => (total += order.quantity), 0);
     return total;
 }
 
-function computeDiscount(orders) {
-    if (totalNumPizza(orders) < 3) return 0;
+function computeDiscount(items) {
+    if (totalNumPizza(items) < 3) return 0;
 
-    const total = computeSubtotal(orders) + computeExtras(orders);
+    const total = computeSubtotal(items) + computeExtra(items);
     return total * 0.1;
 }
 
 const OrderPreview = ({ items, handles }) => {
     const totQuantity = totalNumPizza(items);
     const subtotal = computeSubtotal(items);
-    const extras = computeExtras(items);
+    const extras = computeExtra(items);
     const discount = computeDiscount(items);
 
     return (

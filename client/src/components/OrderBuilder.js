@@ -3,20 +3,14 @@ import { OrderForm } from "./OrderForm";
 import { OrderPreview } from "./OrderPreview";
 import { ContainerFlex } from "./Container";
 import { Dialog } from "./Dialog";
+import { UserContext } from "./App";
+import { Error, errno } from "../utils/error";
 import sys from "../utils/constants";
 import utils from "../utils/utils";
 import OrderItem from "../entities/OrderItem";
 import print from "../utils/printer";
 import customerApi from "../api/customerApi";
 import generalApi from "../api/generalApi";
-
-//const templateForm = {
-//    sizes: Object.values(sys.PIZZA_SIZES),
-//    ingredientsName: Object.values(sys.PIZZA_INGREDIENTS),
-//    requests: undefined,
-//    quantity: 1,
-//};
-//
 
 const debugOrders = [
     new OrderItem(
@@ -50,9 +44,9 @@ const OrderBuilder = () => {
     const [orderItems, setOrderItems] = useState([]);
     const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ small: 0, medium: 0, large: 0 });
     const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [typeMessage, setTypeMessage] = useState("");
     const [isWaiting, setIsWaiting] = useState(false);
+    const [doReset, setDoReset] = useState(false);
 
     // called by OrderForm
     const handleFormSubmit = (item) => {
@@ -71,16 +65,10 @@ const OrderBuilder = () => {
         }));
     };
 
-    // reset the states of the component
-    const reset = async () => {
-        try {
-            const availabilities = await generalApi.getPizzaAvailabilities();
-            setMaxQuantityPerPizza(availabilities);
-            setOrderItems([]);
-        } catch (err) {
-            setError("Fallita la connessione con il server. Ricarica la pagina");
-        }
-    };
+    function genMessage(type, msg) {
+        setTypeMessage(type);
+        setMessage(msg);
+    }
 
     // Submitting the order to the server
     const handleOrderSubmit = async () => {
@@ -91,8 +79,8 @@ const OrderBuilder = () => {
             const status = await customerApi.sendOrder(1, orderItems);
             switch (status) {
                 case 204: {
-                    setMessage("Ordine inviato correttamente");
-                    reset();
+                    genMessage("info", "Ordine inviato correttamente");
+                    setDoReset(true);
                     break;
                 }
                 case 409: {
@@ -112,14 +100,14 @@ const OrderBuilder = () => {
                         }
                     }
 
-                    setMessage("Sono rimaste " + message.join(", "));
+                    genMessage("info", "Sono rimaste " + message.join(", "));
                     break;
                 }
                 default: {
                 }
             }
         } catch (err) {
-            setError("Fallita la connessione con il server. Ricarica la pagina");
+            genMessage("error", Error.getMessage(errno.SERVER_FAILED_CONNECTION));
         } finally {
             setIsWaiting(false);
         }
@@ -140,7 +128,7 @@ const OrderBuilder = () => {
     };
 
     // called by the orderPreview
-    // called when a user changed the quantity of an item
+    // called when a user changes the quantity of an item
     const handleChangeOrderItemQuantity = (indexItem, quantity) => {
         const item = orderItems[indexItem];
         item.quantity -= quantity;
@@ -156,39 +144,70 @@ const OrderBuilder = () => {
         setOrderItems(newOrders);
     };
 
-    // retrieve from the server the available quantity for each size of pizza
-    // called the first time the component has been mounted
+    // retrieve from the server the available quantities for each pizza's size
+    // called the first time the component is mounted
     useEffect(() => {
+        let isMounted = true;
+
         async function retrieveState() {
             try {
                 const availabilities = await generalApi.getPizzaAvailabilities();
-                setMaxQuantityPerPizza(availabilities);
+                if (isMounted) setMaxQuantityPerPizza(availabilities);
             } catch (err) {
-                setError("Fallita la connessione con il server. Ricarica la pagina");
+                genMessage("error", Error.getMessage(errno.SERVER_FAILED_CONNECTION));
             }
         }
 
         retrieveState();
+
+        return () => (isMounted = false);
     }, []);
 
+    // reset the states of the component
     useEffect(() => {
-        print.grp("Current orderItems (OrderBuilder)");
-        print.tb(orderItems);
-        print.out(maxQuantityPerPizza);
-        print.grpend();
+        let isMounted = true;
 
-        //if (message) setTimeout(() => setMessage(""), 1500);
-    }, [orderItems, maxQuantityPerPizza]);
+        // reset the states of the component
+        async function reset() {
+            try {
+                const availabilities = await generalApi.getPizzaAvailabilities();
+
+                if (isMounted) {
+                    setOrderItems([]);
+                    setDoReset(false);
+                    setMaxQuantityPerPizza(availabilities);
+                    resetMessage();
+                }
+            } catch (err) {
+                if (isMounted) {
+                    genMessage("error", Error.getMessage(errno.SERVER_FAILED_CONNECTION));
+                }
+            }
+        }
+
+        if (doReset) reset();
+
+        return () => (isMounted = false);
+    }, [doReset]);
 
     const handleMessage = (msg) => {
-        if (msg.type === "error" && error === "") setError(msg.message);
-        else if (msg.type === "info") setMessage(msg.message);
+        if (msg.type === "error" && typeMessage !== "error") {
+            setTypeMessage("error");
+            setMessage(msg.message);
+        } else if (msg.type === "info") {
+            setTypeMessage("info");
+            setMessage(msg.message);
+        }
     };
+
+    function resetMessage() {
+        setTypeMessage("");
+        setMessage("");
+    }
 
     return (
         <main>
-            {message ? <Dialog type="info" message={message} handles={{ onClick: () => setMessage("") }} /> : null}
-            {error ? <Dialog type="error" message={error} handles={{ onClick: () => setError("") }} /> : null}
+            {message ? <Dialog type={typeMessage} message={message} handles={{ onClick: resetMessage }} /> : null}
             <ContainerFlex padding={true}>
                 <OrderForm
                     maxQuantityPerPizza={maxQuantityPerPizza}

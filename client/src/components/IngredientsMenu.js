@@ -19,7 +19,6 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
     const [selectedItems, setSelectedItems] = useState([]);
     const [currSize, setCurrSize] = useState(size);
     const [errorItems, setErrorItems] = useState([]);
-    const [message, setMessage] = useState({});
 
     const currComponentId = "id-container-pizza-ingredients-menu";
     const currComponentTitle = "Aggiungi Ingredienti!";
@@ -175,9 +174,9 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
 
         // give an warning if the pizza has not be choosen
         if (!size) {
-            setMessage({
-                type: "warning",
-                message: `Prima devi scegliere la dimensione della pizza`,
+            handles.onMessage({
+                type: "info",
+                message: "Seleziona la dimensione della pizza",
             });
             return;
         }
@@ -209,8 +208,8 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
             const isPossible = isAPossibleChoiceTick();
             if (!isPossible) {
                 console.log("LIMITS", limits);
-                setMessage({
-                    type: "warning",
+                handles.onMessage({
+                    type: "info",
                     message: `Puoi selezionare fino a ${Object.values(limits)} ingredienti per una pizza ${size}`,
                 });
                 return;
@@ -298,8 +297,8 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
             print.grpend();
 
             // set info message
-            setMessage({
-                type: "warning",
+            handles.onMessage({
+                type: "info",
                 message: `Il numero massimo di ingredienti per ${newIngredient.side} è stata raggiunta ${
                     limits[newIngredient.side]
                 }`,
@@ -363,16 +362,11 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
             print.grpend();
         };
 
-        if (!checker.isObjEmpty(message)) {
-            (() => setTimeout(() => setMessage({}), 1500))();
-        }
-
         printStates();
-    }, [size, currSize, numSelected, errorItems, selectedItems, limits, message, handles]);
+    }, [size, currSize, numSelected, errorItems, selectedItems, limits, handles]);
 
     return (
         <>
-            <Dialog type="hidden" {...message} />
             <Container id={currComponentId} title={currComponentTitle}>
                 {ingredientsGroupedByInitials.map((group) =>
                     createIngredientsGroup({
@@ -443,7 +437,7 @@ const createPizzaIcons = ({ ingredientName, handleChangeIcon, radioChecked, isEr
                     <label htmlFor={idRadioRight} className="left-half-circle bg-white"></label>
                     <label htmlFor={idRadioRight} className="right-half-circle bg-black toggle"></label>
                 </ContainerFlex>
-                {isError ? <Dialog type="error" message="Seleziona una parte" /> : null}
+                {isError ? <Dialog type="tooltip" message="Seleziona una parte" /> : null}
             </ContainerFlex>
         </Border>
     );

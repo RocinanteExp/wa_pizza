@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "./App";
+import { Dialog } from "./Dialog";
 
 import { ContainerFlex } from "./Container";
 import { TableOrder } from "./Table";
+import { Error, errno } from "../utils/error";
 import api from "../api/customerApi";
 import sys from "../utils/constants";
 import OrderItem from "../entities/OrderItem";
@@ -35,25 +38,38 @@ const AccordionOrder = (order) => {
 };
 
 function generateSummaries(o) {
+    console.log("sono generateSummaries");
     const orders = groupByOrderId(o);
     const summaries = orders.map(AccordionOrder);
     return summaries;
 }
 
 const OrdersHistory = () => {
-    const user = useContext(MyContext);
+    const user = useContext(UserContext);
     const [pastOrders, setPastOrders] = useState([]);
+    const [isWaiting, setIsWaiting] = useState(false);
+    const [message, setMessage] = useState("");
+    const [typeMessage, setTypeMessage] = useState("");
 
     useEffect(() => {
         let isMounted = true;
 
         async function fetchOrders() {
             try {
-                const orders = await api.getCustomerOrdersHistory(userId);
+                if (user) {
+                    setIsWaiting(true);
+                    const orders = await api.getCustomerOrdersHistory(user.id);
 
-                if (isMounted) setPastOrders(orders);
+                    if (isMounted) setPastOrders(orders);
+                } else {
+                    setTypeMessage("info");
+                    setMessage(Error.getMessage(errno.USER_LOGIN_REQUIRED));
+                }
             } catch (err) {
-                console.log("catch di useEffect => fetchOrders", err);
+                setTypeMessage("error");
+                setMessage(Error.getMessage(errno.SERVER_FAILED_CONNECTION));
+            } finally {
+                setIsWaiting(false);
             }
         }
 
@@ -62,7 +78,15 @@ const OrdersHistory = () => {
         return () => (isMounted = false);
     }, []);
 
-    return <ContainerFlex dir="column">{generateSummaries(pastOrders)}</ContainerFlex>;
+    return (
+        <>
+            {pastOrders.length === 0 || !user ? (
+                <Dialog type={typeMessage} message={message} handles={{onClick: ()=>setMessage("")}} />
+            ) : (
+                <ContainerFlex dir="column">{generateSummaries(pastOrders)}</ContainerFlex>
+            )}
+        </>
+    );
 };
 
 /**

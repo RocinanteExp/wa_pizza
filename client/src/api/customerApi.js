@@ -11,13 +11,14 @@ async function getCustomerOrdersHistory(customerId) {
 
         if (response.ok) {
             const orders = await response.json();
-
-            Promise.resolve(orders);
-            return;
+            console.log("sono api getCustomerOrdersHistory", orders);
+            return orders;
+        } else {
+            throw response.status;
         }
-        Promise.reject(response.status);
+
     } catch (err) {
-        Promise.reject("Generic Error");
+        throw new Error(err);
     }
 }
 
