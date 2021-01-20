@@ -1,7 +1,6 @@
 import utils from "../utils/utils";
 import { useState, useEffect } from "react";
 import sys from "../utils/constants";
-import checker from "../utils/checker";
 import { Dialog } from "./Dialog";
 import { Container, ContainerFlex, Border } from "./Container";
 import print from "../utils/printer";
@@ -207,10 +206,15 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
             // check if the user can still choose more ingredients
             const isPossible = isAPossibleChoiceTick();
             if (!isPossible) {
-                console.log("LIMITS", limits);
+                let maxIngredients = limits["both"];
+                if (size === sys.PIZZA_SIZES.LARGE) {
+                    maxIngredients = `${limits["left"]} sx`;
+                    maxIngredients += `, ${limits["right"]} dx`;
+                }
+
                 handles.onMessage({
                     type: "info",
-                    message: `Puoi selezionare fino a ${Object.values(limits)} ingredienti per una pizza ${size}`,
+                    message: `Puoi selezionare fino a ${maxIngredients} ingredienti per una pizza ${size}`,
                 });
                 return;
             }
@@ -275,7 +279,6 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
     // called only when the pizza is large
     // when you click the icon of the pizza
     const handleChangeIcon = (event) => {
-        // TODO handle splits of multi-words => now the ids are represented with a space "both-frutti di mare"
         const ingredientFields = event.target.value.split("-");
 
         // target ingredient
@@ -296,13 +299,15 @@ const PizzaIngredientsMenu = ({ size, names, handles, maxPerSize }) => {
             print.out("failed oldside:", oldIngredient.side, " => newside:", newIngredient.side);
             print.grpend();
 
+            let maxIngredients = `${limits["left"]} sx`;
+            maxIngredients += `, ${limits["right"]} dx`;
+
             // set info message
             handles.onMessage({
                 type: "info",
-                message: `Il numero massimo di ingredienti per ${newIngredient.side} è stata raggiunta ${
-                    limits[newIngredient.side]
-                }`,
+                message: `Per una pizza large puoi selezionare al massimo ${maxIngredients}`,
             });
+
             return;
         }
 

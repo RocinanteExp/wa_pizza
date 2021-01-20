@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
-import print from "../utils/printer";
 import "../styles/App.css";
 
 const Counter = ({ min, max, callback }) => {
     const [counter, setCounter] = useState(min);
 
     useEffect(() => {
-        print.grp("COUNTER useeffect");
-        print.out(counter);
-        print.grpend();
         // update the OrderForm state pizzaQuantity
         callback(counter);
 

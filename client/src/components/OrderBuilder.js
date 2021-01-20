@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { OrderForm } from "./OrderForm";
 import { OrderPreview } from "./OrderPreview";
 import { ContainerFlex } from "./Container";
@@ -41,6 +41,7 @@ const debugOrders = [
  * PIZZA_MAX_QUANTITIES = { small: 0, medium: 8, large: 10 };
  **/
 const OrderBuilder = () => {
+    const user = useContext(UserContext);
     const [orderItems, setOrderItems] = useState([]);
     const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ small: 0, medium: 0, large: 0 });
     const [message, setMessage] = useState("");
@@ -76,7 +77,13 @@ const OrderBuilder = () => {
 
         setIsWaiting(true);
         try {
-            const status = await customerApi.sendOrder(1, orderItems);
+            const copy = [...orderItems];
+
+            const totItems = copy.reduce((total, item) => total + item.quantity, 0);
+            if (totItems >= 3) copy.forEach((item) => (item.discount = 10));
+
+            console.log("SENDING", totItems, orderItems);
+            const status = await customerApi.sendOrder(user.id, copy);
             switch (status) {
                 case 204: {
                     genMessage("info", "Ordine inviato correttamente");
@@ -176,7 +183,6 @@ const OrderBuilder = () => {
                     setOrderItems([]);
                     setDoReset(false);
                     setMaxQuantityPerPizza(availabilities);
-                    resetMessage();
                 }
             } catch (err) {
                 if (isMounted) {
