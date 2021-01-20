@@ -7,6 +7,8 @@ const dao = require("./db/dao");
 const { router: customerRouter } = require("./routers/customerRouter");
 const { router: generalRouter } = require("./routers/generalRouter");
 const cookieParser = require("cookie-parser");
+const jwt = require("express-jwt");
+const conf = require("./utils/conf");
 
 const app = express();
 
@@ -21,63 +23,26 @@ morgan.token("host", function (req) {
 });
 app.use(morgan(":method".blue + " :url :host code: :status :res[content-length] - :response-time ms"));
 
-// GENERAL ROUTER (NO LOGIN NEEDED)
-//app.use(`${BASE_ROUTE}`, () => console.log("general handler stub"));
-
-//app.use(
-//    jwt({
-//        secret: JWT_SECRET,
-//        algorithms: ["HS256"],
-//        resultProperty: "userId",
-//        getToken: (req) => req.cookies.token,
-//    }).unless({ path: ["/login", "/logout"] })
-//);
-
-//app.use(function (err, req, res, next) {
-//    if (err.name === "UnauthorizedError") {
-//        res.status(401)
-//            .json(
-//                StandardErr.new(
-//                    "Login middleware",
-//                    StandardErr.errno.NOT_ALLOWED,
-//                    "login must be performed before this action",
-//                    401
-//                )
-//            )
-//            .end();
-//    } else {
-//        next();
-//    }
-//});
-
 app.use(`${BASE_ROUTE}/`, generalRouter);
+
+app.use(
+    jwt({
+        secret: conf.JWT_SECRET,
+        algorithms: ["HS256"],
+        getToken: (req) => req.cookies.jwt,
+    })
+);
+
+app.use(function (err, req, res, next) {
+    if (err.name === "UnauthorizedError") {
+        res.status(401).end();
+    }
+});
+
 app.use(`${BASE_ROUTE}/customers`, customerRouter);
 
-// every other routes get handled by this handler
+// every other routes
 app.all("/*", (req, res) => res.send("This route is not supported. Check the openapi doc"));
-
-/**
- * parse command line options
- */
-function parseOptions(options) {
-    //    for (const option of options) {
-    //        switch (option) {
-    //            case "--test":
-    //                systemConf["--test"] = "testing.db";
-    //                systemConf["dbPath"] = "testing.db";
-    //                break;
-    //            case "--no-autorun":
-    //                systemConf[option] = true;
-    //                break;
-    //            case "--sql-path":
-    //                const index = options.indexOf(option);
-    //                systemConf["--sql-path"] = options[index + 1];
-    //                break;
-    //            default:
-    //                break;
-    //        }
-    //    }
-}
 
 function printConf() {
     print.info("Server running on " + `http://localhost:${PORT}${BASE_ROUTE}`);
@@ -88,7 +53,7 @@ function printConf() {
     try {
         print.info("Initializing the system");
 
-        dao.open();
+        await dao.open();
         app.listen(PORT, printConf);
     } catch (err) {
         print.err(err, "FAILED initializing the system".red);

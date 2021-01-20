@@ -12,6 +12,7 @@ router.post("/logout", handleUserLogout);
 router.get("/pizzas/availabilities", getPizzaAvailabilities);
 
 async function handleUserLogin(req, res) {
+    const expireTimeInSec = 60 * 60;
     const { email, password } = req.body;
 
     try {
@@ -20,7 +21,7 @@ async function handleUserLogin(req, res) {
             delete user.password;
             const jwt = jsonwebtoken.sign({ userId: user.id, iat: Date.now() }, conf.JWT_SECRET, { expiresIn: "1h" });
 
-            res.cookie("jwt", jwt, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+            res.cookie("jwt", jwt, { httpOnly: true, sameSite: true, maxAge: expireTimeInSec * 1000 });
             res.status(200).json(user).end();
             return;
         }

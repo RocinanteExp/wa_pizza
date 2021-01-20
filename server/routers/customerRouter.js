@@ -3,7 +3,6 @@
 const router = require("express").Router();
 const dao = require("../db/dao");
 const print = require("../utils/printer");
-const assert = require("assert");
 
 router.get("/:id/orders", getOrders);
 router.post("/:id/orders", addOrder);
@@ -16,12 +15,21 @@ const errno = {
     PIZZA_QUANTITY_INSUFFICIENT: 10,
 };
 
+function isSameUser(req) {
+    return req.user.userId === Number(req.params.id);
+}
 /**
  * response status code:
  * 200
+ * 401 unauthorized
  * 500 generic db error
  */
 async function getOrders(req, res) {
+    if (!isSameUser(req)) {
+        res.status(401).end();
+        return;
+    }
+
     try {
         const orders = await dao.getOrdersByUserId(req.params.id);
         res.status(200).json(orders);
@@ -33,10 +41,16 @@ async function getOrders(req, res) {
 /**
  * 204 order saved into the db
  * 400 bad request. failed validateOrder
+ * 401 unauthorized
  * 409 the requested number of pizza exceed the number of available pizzas
  * 500 generic db error
  */
 async function addOrder(req, res) {
+    if (!isSameUser(req)) {
+        res.status(401).end();
+        return;
+    }
+
     const order = req.body;
 
     const isOk = validateOrder(order);
