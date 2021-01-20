@@ -40,7 +40,7 @@ import generalApi from "../api/generalApi";
  * maxQuantityPerPizza represents the maximum number of pizza per type that a customer can order
  * PIZZA_MAX_QUANTITIES = { small: 0, medium: 8, large: 10 };
  **/
-const OrderBuilder = () => {
+const OrderBuilder = ({ handles }) => {
     const user = useContext(UserContext);
     const [orderItems, setOrderItems] = useState([]);
     const [maxQuantityPerPizza, setMaxQuantityPerPizza] = useState({ small: 0, medium: 0, large: 0 });
@@ -87,6 +87,10 @@ const OrderBuilder = () => {
             switch (status) {
                 case 204: {
                     genMessage("info", "Ordine inviato correttamente");
+                    setTimeout(
+                        () => handles.onMessage("success", `X utente ${user.email}: il tuo ordine è pronto`),
+                        5000
+                    );
                     setDoReset(true);
                     break;
                 }

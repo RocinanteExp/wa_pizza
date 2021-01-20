@@ -9,11 +9,7 @@ const createQuantitySelect = (maxQuantity, defaultQuantity, cb1, cb2) => {
     optionTags.push(<option value="Rimuovi">Rimuovi</option>);
 
     for (let i = 1; i <= maxQuantity; i++) {
-        optionTags.push(
-            <option value={i} selected={defaultQuantity === i ? "selected" : ""}>
-                {i}
-            </option>
-        );
+        optionTags.push(<option value={i}>{i}</option>);
     }
 
     return (
@@ -24,7 +20,8 @@ const createQuantitySelect = (maxQuantity, defaultQuantity, cb1, cb2) => {
                     cb2(event.target.value);
                 }
             }}
-            class="select"
+            className="select"
+            value={defaultQuantity}
         >
             {optionTags}
         </select>

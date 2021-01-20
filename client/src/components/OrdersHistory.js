@@ -20,13 +20,9 @@ const AccordionOrder = ({ order }) => {
     const leftSummary = `+ Ordine n. ${order[0].orderId} (${totPizze} x ${totPizze === 1 ? "pizza" : "pizze"})`;
     const rightSummary = `totale: ${totCost.toFixed(2)}€`;
 
-    const handleOnToggle = (event) => {
-        console.log(event.target.open);
-    };
-
     return (
         <ContainerFlex mainAxis="spaceBetween" style={{ maxWidth: "max(50%, 804px)" }}>
-            <details key={key} onToggle={handleOnToggle}>
+            <details key={key}>
                 <summary>
                     <span>{leftSummary}</span>
                     <span>{rightSummary}</span>

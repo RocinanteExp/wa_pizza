@@ -11,7 +11,6 @@ async function getCustomerOrdersHistory(customerId) {
 
         if (response.ok) {
             const orders = await response.json();
-            console.log("sono api getCustomerOrdersHistory", orders);
             return orders;
         } else {
             throw response.status;

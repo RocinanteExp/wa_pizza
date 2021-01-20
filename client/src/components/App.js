@@ -2,6 +2,7 @@ import "../styles/App.css";
 import "../styles/Container.css";
 import { useState, createContext, useContext, useEffect } from "react";
 import { OrdersHistory } from "./OrdersHistory";
+import { Dialog } from "./Dialog";
 import OrderBuilder from "./OrderBuilder";
 import Login from "./Login";
 import Logout from "./Logout";
@@ -38,10 +39,21 @@ const Navbar = () => {
 
 const App = () => {
     const [user, setUser] = useState(null);
+    const [typeMessage, setTypeMessage] = useState("");
+    const [message, setMessage] = useState("");
+
+    const handleMessage = (type, message) => {
+        setTypeMessage(type);
+        setMessage(message);
+    };
+
+    const resetMessage = () => {
+        setTypeMessage("");
+        setMessage("");
+    };
 
     useEffect(() => {
-        console.log("Utente");
-        console.log(user);
+        console.log("Utente connesso (App) =>", user);
     }, [user]);
 
     return (
@@ -49,6 +61,7 @@ const App = () => {
             <UserContext.Provider value={user}>
                 <Router>
                     <Navbar />
+                    {message ? <Dialog type={typeMessage} message={message} handles={{ onClick: resetMessage }} /> : null}
                     <Switch>
                         <Route path="/login">
                             {user ? (
@@ -61,7 +74,7 @@ const App = () => {
                             {user ? <Logout handles={{ onLogout: () => setUser(null) }} /> : <Redirect to={"/login"} />}
                         </Route>
                         <Route path="/order">
-                            <OrderBuilder />
+                            <OrderBuilder handles={{ onMessage: handleMessage }} />
                         </Route>
                         <Route path="/history">
                             <OrdersHistory />

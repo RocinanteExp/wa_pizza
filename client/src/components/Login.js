@@ -1,6 +1,6 @@
 import { ContainerFlex, Container } from "./Container";
 import generalApi from "../api/generalApi";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -11,6 +11,7 @@ const Login = ({ handles }) => {
     const [isWaiting, setIsWaiting] = useState(false);
     const [message, setMessage] = useState("");
     const [typeMessage, setTypeMessage] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
 
     const formEl = useRef();
 
@@ -32,6 +33,10 @@ const Login = ({ handles }) => {
         }
     };
 
+    useEffect(() => {
+        setIsMounted(true);
+        return () => setIsMounted(false);
+    }, []);
     function genMessage(type, msg) {
         setTypeMessage(type);
         setMessage(msg);
@@ -46,7 +51,6 @@ const Login = ({ handles }) => {
             try {
                 const ret = await generalApi.userLogin(email, password);
                 if (typeof ret === "object") {
-                    console.log("USER FOUND", ret);
                     handles.onLogin(ret);
                     return;
                 }
@@ -63,7 +67,7 @@ const Login = ({ handles }) => {
             } catch (err) {
                 genMessage("error", "Fallita la connessione con il server. Ricarica la pagina");
             } finally {
-                setIsWaiting(false);
+                if (isMounted) setIsWaiting(false);
             }
         } else {
             formEl.current.reportValidity();
