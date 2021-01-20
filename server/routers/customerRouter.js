@@ -17,6 +17,7 @@ const errno = {
 };
 
 /**
+ * response status code:
  * 200
  * 500 generic db error
  */
@@ -54,7 +55,7 @@ async function addOrder(req, res) {
             const { doProceed, availabilities } = await checkPizzaAvailabilities(order);
 
             if (doProceed) {
-                await dao.saveOrder(order);
+                await dao.saveOrder(order, req.params.id);
 
                 //compute current availabilities
                 for (const item of order) {

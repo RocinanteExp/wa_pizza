@@ -6,7 +6,18 @@ const DEFAULT_DB_PATH = path.join(__dirname, "db.db");
 
 // glbal single access to the db
 let db = null;
-let globalCounterOrderId = 1;
+let globalCounterOrderId;
+
+const getMaxOrderId = () => {
+    const query = `SELECT MAX(orderId) as count FROM Orders`;
+
+    return new Promise((res, rej) => {
+        db.get(query, (error, row) => {
+            if (error) rej(error);
+            else res(row);
+        });
+    });
+};
 
 /**
  * open a connection with the database.
@@ -20,12 +31,19 @@ const open = (dbpath = DEFAULT_DB_PATH) => {
         if (db) await close();
 
         // open new connection
-        db = new sqlite.Database(dbpath, (err) => {
+        db = new sqlite.Database(dbpath, async (err) => {
             if (err) rej(err);
-            else res();
+
+            try {
+                const { count } = await getMaxOrderId();
+                globalCounterOrderId = count === null ? 0 : count + 1;
+                res();
+            } catch (err) {
+                rej(err);
+            }
         });
 
-        db.on("profile", (query, time) => {
+        db.on("profile", (query) => {
             query = query.replace(/ +(?= )/g, "");
             console.log("QUERY EXECUTED => ", query);
         });
@@ -68,8 +86,7 @@ const normalizeValue = (value) => {
  * @param {User} the requesting user
  * @param {String}
  */
-//TODO extra should contain a flat number
-const generateAddOrderQuery = (order) => {
+const generateAddOrderQuery = (order, userId) => {
     const queries = [];
     for (orderItem of order) {
         const fields = Object.keys(orderItem);
@@ -90,13 +107,14 @@ const generateAddOrderQuery = (order) => {
             }
         }
 
-        const sql = `INSERT INTO Orders(${fields.join(", ")}, orderId) VALUES(${values.join(
+        const sql = `INSERT INTO Orders(${fields.join(", ")}, orderId, userId) VALUES(${values.join(
             ", "
-        )}, ${globalCounterOrderId})`;
+        )}, ${globalCounterOrderId}, ${userId})`;
 
         queries.push(sql);
     }
 
+    console.log(queries);
     globalCounterOrderId++;
 
     return queries;
@@ -117,8 +135,8 @@ const promisifyQueryRun = (query) => {
  * @param {User} the requesting user
  * @param {Promise} resolved if everything went well, rejected otherwise
  */
-const saveOrder = (order, userId, callback) => {
-    const sqlQueries = generateAddOrderQuery(order);
+const saveOrder = (order, userId) => {
+    const sqlQueries = generateAddOrderQuery(order, userId);
 
     return new Promise((res, rej) => {
         db.serialize(async () => {
